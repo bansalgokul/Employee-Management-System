@@ -1,6 +1,6 @@
-const accessCheck = (role) => {
+const accessCheck = (roles) => {
 	return function (req, res, next) {
-		if (req.user.roles === role) {
+		if (req.user.roles === roles) {
 			console.log("in access check");
 			next();
 		} else {

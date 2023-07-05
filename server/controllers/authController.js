@@ -1,110 +1,143 @@
 const User = require("../models/User");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
+const Joi = require("joi");
 require("dotenv").config();
 
+const loginSchema = Joi.object({
+	email: Joi.string().email().required(),
+	password: Joi.string().min(6).required(),
+});
+
 const login = async (req, res) => {
-	console.log(req);
-	const { email, password } = req.body;
+	try {
+		const { email, password } = req.body;
 
-	if (!email || !password) {
-		return res.status(400).json({ error: "Missing Credentials" });
+		const validation = loginSchema.validate({
+			email,
+			password,
+		});
+		if (validation.error) {
+			return res.status(401).json({ error: "Invalid Credentials" });
+		}
+
+		const foundUser = await User.findOne({ email });
+
+		if (!foundUser) {
+			return res.status(401).json({ error: "Invalid User" });
+		}
+
+		const match = await bcrypt.compare(password, foundUser.password);
+
+		if (!match) {
+			return res.status(401).json({ error: "Wrong Password" });
+		}
+
+		const payload = {
+			user: {
+				name: foundUser.name,
+				roles: foundUser.roles,
+				_id: foundUser._id,
+			},
+		};
+
+		const accessToken = jwt.sign(payload, process.env.ACCESS_TOKEN_SECRET, {
+			expiresIn: "150m",
+		});
+		const refreshToken = jwt.sign(
+			payload,
+			process.env.REFRESH_TOKEN_SECRET,
+			{
+				expiresIn: "1d",
+			},
+		);
+
+		res.cookie("jwt", refreshToken, {
+			httpOnly: true,
+			secure: true,
+			sameSite: "None",
+			maxAge: 24 * 60 * 60 * 1000,
+		});
+
+		return res.status(200).json({
+			accessToken,
+			message: "Login successful",
+			foundUser,
+		});
+	} catch (err) {
+		console.error(err);
+		return res.status(500).json({ error: "Login error" });
 	}
-
-	const foundUser = await User.findOne({ email }).exec();
-
-	if (!foundUser) {
-		return res.status(400).json({ error: "User not found" });
-	}
-
-	const match = await bcrypt.compare(password, foundUser.password);
-
-	if (!match) {
-		res.status(400).json({ error: "Wrong Password" });
-	}
-
-	const payload = {
-		user: {
-			name: foundUser.name,
-			roles: foundUser.roles,
-			id: foundUser._id,
-		},
-	};
-
-	console.log(payload);
-
-	const accessToken = jwt.sign(payload, process.env.ACCESS_TOKEN_SECRET, {
-		expiresIn: "15m",
-	});
-	const refreshToken = jwt.sign(payload, process.env.REFRESH_TOKEN_SECRET, {
-		expiresIn: "1d",
-	});
-
-	res.cookie("jwt", refreshToken, {
-		httpOnly: true,
-		secure: true,
-		sameSite: "None",
-		maxAge: 24 * 60 * 60 * 1000,
-	});
-
-	res.status(200).json({
-		accessToken,
-		message: "Login successful",
-		foundUser,
-	});
 };
 
 const refresh = (req, res) => {
-	const cookies = req.cookies;
+	try {
+		const cookies = req.cookies;
 
-	if (!cookies?.jwt) return res.status(400).json({ error: "Cookie missing" });
+		if (!cookies?.jwt)
+			return res.status(400).json({ error: "Cookie missing" });
 
-	const refreshToken = cookies.jwt;
+		const refreshToken = cookies.jwt;
 
-	jwt.verify(
-		refreshToken,
-		process.env.REFRESH_TOKEN_SECRET,
-		async (err, decoded) => {
-			if (err)
-				return res
-					.status(400)
-					.json({ error: "JWT REFERSH TOKEN verify failed" });
+		jwt.verify(
+			refreshToken,
+			process.env.REFRESH_TOKEN_SECRET,
+			async (err, decoded) => {
+				if (err)
+					return res
+						.status(400)
+						.json({ error: "JWT REFERSH TOKEN verify failed" });
 
-			const foundUser = await User.findById(decoded.user.id);
-			if (!foundUser)
-				return res.status(400).json({ error: "Invalid Refresh Token" });
+				const foundUser = await User.findById(decoded.user._id);
+				if (!foundUser)
+					return res
+						.status(400)
+						.json({ error: "Invalid Refresh Token" });
 
-			const payload = {
-				user: {
-					name: foundUser.name,
-					roles: foundUser.roles,
-					id: foundUser._id,
-				},
-			};
+				const payload = {
+					user: {
+						name: foundUser.name,
+						roles: foundUser.roles,
+						_id: foundUser._id,
+					},
+				};
 
-			const accessToken = jwt.sign(
-				payload,
-				process.env.ACCESS_TOKEN_SECRET,
-				{
-					expiresIn: "15m",
-				},
-			);
+				const accessToken = jwt.sign(
+					payload,
+					process.env.ACCESS_TOKEN_SECRET,
+					{
+						expiresIn: "150m",
+					},
+				);
 
-			return res.status(200).json({
-				accessToken,
-				message: "Refresh successful",
-			});
-		},
-	);
+				return res.status(200).json({
+					accessToken,
+					message: "Refresh successful",
+				});
+			},
+		);
+	} catch (err) {
+		console.error(err);
+		return res.status(500).json({ error: "Refresh error" });
+	}
 };
 
 const logout = (req, res) => {
-	const cookies = req.cookies;
-	if (!cookies?.jwt)
-		return res.status(200).json({ message: "Logout successful" });
+	try {
+		const cookies = req.cookies;
+		if (!cookies?.jwt)
+			return res.status(204).json({ message: "Logout successful" });
 
-	res.clearCookie("jwt", { httpOnly: true, sameSite: "None", secure: true });
-	res.status(200).json({ message: "Cookie cleared" });
+		res.clearCookie("jwt", {
+			httpOnly: true,
+			sameSite: "None",
+			secure: true,
+		});
+		return res.status(200).json({ message: "Cookie cleared" });
+	} catch (err) {
+		console.error(err);
+		return res.status(500).json({ error: "Logout error" });
+	}
 };
 
 module.exports = { login, refresh, logout };

@@ -1,40 +1,48 @@
 const validator = require("validator");
 const User = require("../models/User");
 const bcyrpt = require("bcryptjs");
+const Joi = require("joi");
 require("dotenv").config();
 
+const newUserSchema = Joi.object({
+	name: Joi.string().required(),
+	email: Joi.string().email().required(),
+	password: Joi.string().min(6).required(),
+	empID: Joi.string().pattern(/^EMP-/).required(),
+	roles: Joi.array().items(Joi.string()).required(),
+});
+
 const newUser = async (req, res) => {
-	const { name, email, password, empID, roles } = req.body;
+	try {
+		const { name, email, password, empID, roles } = req.body;
+		const validation = newUserSchema.validate({
+			name,
+			email,
+			password,
+			empID,
+			roles,
+		});
+		if (validation.error) {
+			return res.status(401).json({ error: "Invalid Credentials" });
+		}
 
-	if (!name || !email || !password || !empID || !roles) {
-		return res.status(400).json({ error: "Missing Credentials" });
+		const hashedPassword = bcyrpt.hashSync(password, process.env.SALT);
+
+		const userDoc = await User.create({
+			name,
+			email,
+			password: hashedPassword,
+			empID,
+			roles,
+		});
+
+		return res
+			.status(201)
+			.json({ message: "User added successfully", userDoc });
+	} catch (err) {
+		console.error(err);
+		return res.status(500).json({ error: "Register user error" });
 	}
-
-	if (!validator.isEmail(email)) {
-		return res.status(400).json({ error: "Email not valid" });
-	}
-
-	if (password.length < 6) {
-		return res.status(400).json({ error: "Password Too Weak" });
-	}
-
-	if (!empID.startsWith("EMP-")) {
-		return res.status(400).json({ error: "EMP Id invalid" });
-	}
-
-	const hashedPassword = bcyrpt.hashSync(password, process.env.SALT);
-
-	const userDoc = await User.create({
-		name,
-		email,
-		password: hashedPassword,
-		empID,
-		roles,
-	});
-
-	return res
-		.status(201)
-		.json({ message: "User added successfully", userDoc });
 };
 
 module.exports = { newUser };

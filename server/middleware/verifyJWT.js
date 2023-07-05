@@ -1,24 +1,28 @@
 const jwt = require("jsonwebtoken");
+const User = require("../models/User");
 require("dotenv").config();
 
-const verifyJWT = (req, res, next) => {
+const verifyJWT = async (req, res, next) => {
 	const authHeader = req.headers.authorization || req.headers.Authorization;
 
-	if (!authHeader.startsWith("Bearer ")) {
+	if (!authHeader?.startsWith("Bearer ")) {
 		return res.status(400).json({ error: "Invalid access token" });
 	}
 
 	const token = authHeader.split(" ")[1];
 
-	jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, decoded) => {
-		if (err) {
-			return res.status(400).json({ error: "Token decoding error" });
-		}
-
+	try {
+		const decoded = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
 		console.log(decoded);
+		const userDoc = await User.findById(decoded.user?._id);
+		if (!userDoc) {
+			return res.status(400).json({ error: "User not found" });
+		}
 		req.user = decoded.user;
 		next();
-	});
+	} catch (err) {
+		return res.status(400).json({ error: "Token decoding error" });
+	}
 };
 
 module.exports = verifyJWT;

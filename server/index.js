@@ -3,23 +3,21 @@ const connectDB = require("./config/dbConfig");
 const express = require("express");
 const app = express();
 require("dotenv").config();
-const registerRoute = require("./routes/registerRoute");
-const authRoute = require("./routes/authRoute");
-const cookieParser = require("cookie-parser");
 
-connectDB();
+const indexRoute = require("./routes/indexRoute");
+const cookieParser = require("cookie-parser");
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 
-app.use("/auth", authRoute);
-app.use("/register", registerRoute);
+app.use("/", indexRoute);
 
 mongoose.connection.once("open", function () {
 	console.log("Connected successfully");
 });
 
 app.listen(process.env.PORT, () => {
+	connectDB();
 	console.log("Server running on port ", process.env.PORT);
 });
