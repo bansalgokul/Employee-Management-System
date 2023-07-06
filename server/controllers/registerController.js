@@ -1,21 +1,22 @@
-const validator = require("validator");
-const User = require("../models/User");
-const bcyrpt = require("bcryptjs");
-const Joi = require("joi");
-require("dotenv").config();
-
-const newUserSchema = Joi.object({
-	name: Joi.string().required(),
-	email: Joi.string().email().required(),
-	password: Joi.string().min(6).required(),
-	empID: Joi.string().pattern(/^EMP-/).required(),
-	roles: Joi.array().items(Joi.string()).required(),
-});
+import User from "../models/User.js";
+import bcyrpt from "bcryptjs";
+import Joi from "joi";
+import dotenv from "dotenv";
+dotenv.config();
 
 const newUser = async (req, res) => {
 	try {
 		const { name, email, password, empID, roles } = req.body;
-		const validation = newUserSchema.validate({
+
+		const schema = Joi.object({
+			name: Joi.string().required(),
+			email: Joi.string().email().required(),
+			password: Joi.string().min(6).required(),
+			empID: Joi.string().pattern(/^EMP-/).required(),
+			roles: Joi.array().items(Joi.string()).required(),
+		});
+
+		const validation = schema.validate({
 			name,
 			email,
 			password,
@@ -41,8 +42,8 @@ const newUser = async (req, res) => {
 			.json({ message: "User added successfully", userDoc });
 	} catch (err) {
 		console.error(err);
-		return res.status(500).json({ error: "Register user error" });
+		return res.status(500).json({ error: "Cannot register user" });
 	}
 };
 
-module.exports = { newUser };
+export { newUser };

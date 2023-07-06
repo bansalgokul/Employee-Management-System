@@ -1,19 +1,20 @@
-const User = require("../models/User");
-const bcrypt = require("bcryptjs");
-const jwt = require("jsonwebtoken");
-const Joi = require("joi");
-require("dotenv").config();
-
-const loginSchema = Joi.object({
-	email: Joi.string().email().required(),
-	password: Joi.string().min(6).required(),
-});
+import User from "../models/User.js";
+import bcrypt from "bcryptjs";
+import jwt from "jsonwebtoken";
+import Joi from "joi";
+import dotenv from "dotenv";
+dotenv.config();
 
 const login = async (req, res) => {
 	try {
 		const { email, password } = req.body;
 
-		const validation = loginSchema.validate({
+		const schema = Joi.object({
+			email: Joi.string().email().required(),
+			password: Joi.string().min(6).required(),
+		});
+
+		const validation = schema.validate({
 			email,
 			password,
 		});
@@ -21,7 +22,9 @@ const login = async (req, res) => {
 			return res.status(401).json({ error: "Invalid Credentials" });
 		}
 
-		const foundUser = await User.findOne({ email });
+		const foundUser = await User.findOne({ email })
+			.select("+password")
+			.exec();
 
 		if (!foundUser) {
 			return res.status(401).json({ error: "Invalid User" });
@@ -52,6 +55,8 @@ const login = async (req, res) => {
 			},
 		);
 
+		const userDoc = await User.findOne({ email });
+
 		res.cookie("jwt", refreshToken, {
 			httpOnly: true,
 			secure: true,
@@ -62,7 +67,7 @@ const login = async (req, res) => {
 		return res.status(200).json({
 			accessToken,
 			message: "Login successful",
-			foundUser,
+			userDoc,
 		});
 	} catch (err) {
 		console.error(err);
@@ -86,13 +91,13 @@ const refresh = (req, res) => {
 				if (err)
 					return res
 						.status(400)
-						.json({ error: "JWT REFERSH TOKEN verify failed" });
+						.json({ error: "Invalid credentials" });
 
 				const foundUser = await User.findById(decoded.user._id);
 				if (!foundUser)
 					return res
 						.status(400)
-						.json({ error: "Invalid Refresh Token" });
+						.json({ error: "Invalid credentials" });
 
 				const payload = {
 					user: {
@@ -118,7 +123,7 @@ const refresh = (req, res) => {
 		);
 	} catch (err) {
 		console.error(err);
-		return res.status(500).json({ error: "Refresh error" });
+		return res.status(500).json({ error: "Cannot refresh" });
 	}
 };
 
@@ -136,8 +141,8 @@ const logout = (req, res) => {
 		return res.status(200).json({ message: "Cookie cleared" });
 	} catch (err) {
 		console.error(err);
-		return res.status(500).json({ error: "Logout error" });
+		return res.status(500).json({ error: "Cannot logout" });
 	}
 };
 
-module.exports = { login, refresh, logout };
+export { login, refresh, logout };

@@ -1,6 +1,7 @@
-const jwt = require("jsonwebtoken");
-const User = require("../models/User");
-require("dotenv").config();
+import User from "../models/User.js";
+import jwt from "jsonwebtoken";
+import dotenv from "dotenv";
+dotenv.config();
 
 const verifyJWT = async (req, res, next) => {
 	const authHeader = req.headers.authorization || req.headers.Authorization;
@@ -21,8 +22,8 @@ const verifyJWT = async (req, res, next) => {
 		req.user = decoded.user;
 		next();
 	} catch (err) {
-		return res.status(400).json({ error: "Token decoding error" });
+		return res.status(400).json({ error: "Invalid token" });
 	}
 };
 
-module.exports = verifyJWT;
+export default verifyJWT;

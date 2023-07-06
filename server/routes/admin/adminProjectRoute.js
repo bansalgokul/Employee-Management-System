@@ -1,16 +1,19 @@
-const express = require("express");
-const router = express.Router();
-const adminProjectController = require("../../controllers/admin/adminProjectController");
+import { Router } from "express";
+const router = Router();
+import {
+	getAllProjectAdmin,
+	addProjectAdmin,
+	editProjectAdmin,
+	getProjectAdmin,
+	deleteProjectAdmin,
+} from "../../controllers/admin/adminProjectController.js";
 
 router
 	.route("/")
-	.get(adminProjectController.getAllProjectAdmin)
-	.post(adminProjectController.addProjectAdmin)
-	.put(adminProjectController.editProjectAdmin);
+	.get(getAllProjectAdmin)
+	.post(addProjectAdmin)
+	.put(editProjectAdmin);
 
-router
-	.route("/:id")
-	.get(adminProjectController.getProjectAdmin)
-	.delete(adminProjectController.deleteProjectAdmin);
+router.route("/:id").get(getProjectAdmin).delete(deleteProjectAdmin);
 
-module.exports = router;
+export default router;

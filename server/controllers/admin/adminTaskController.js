@@ -1,22 +1,41 @@
-const Project = require("../../models/Project");
-const Task = require("../../models/Task");
-const User = require("../../models/User");
+import Project from "../../models/Project.js";
+import User from "../../models/User.js";
+import Joi from "joi";
+import Task from "../../models/Task.js";
 
 const addTaskAdmin = async (req, res) => {
 	try {
 		const { description, project, startedAt, user, endedAt } = req.body;
-		if (!description || !project || !user || !startedAt) {
-			return res.status(401).json({ error: "Missing credentials" });
+		4;
+
+		const schema = Joi.object({
+			description: Joi.string().required(),
+			project: Joi.string().required(),
+			user: Joi.string().required(),
+			startedAt: Joi.date().required(),
+			endedAt: Joi.date(),
+		});
+
+		const validation = schema.validate({
+			description,
+			project,
+			user,
+			startedAt,
+			endedAt,
+		});
+
+		if (validation.error) {
+			return res.status(401).json({ error: "Invalid Credentials" });
 		}
 
 		const projectDoc = await Project.findById(project);
 		if (!projectDoc) {
-			return res.status(404).json({ error: "Invalid project" });
+			return res.status(404).json({ error: "Project not found" });
 		}
 
 		const userDoc = await User.findById(user);
 		if (!userDoc) {
-			return res.status(404).json({ error: "Invalid user" });
+			return res.status(404).json({ error: "User not found" });
 		}
 
 		const addFields = {
@@ -34,7 +53,7 @@ const addTaskAdmin = async (req, res) => {
 			.json({ message: "Task created successfully", taskDoc });
 	} catch (err) {
 		console.error(err);
-		return res.status(500).json({ error: "Add Task Admin error" });
+		return res.status(500).json({ error: "Cannot create Task" });
 	}
 };
 
@@ -43,8 +62,25 @@ const editTaskAdmin = async (req, res) => {
 		const { _id, description, project, startedAt, endedAt, user } =
 			req.body;
 
-		if (!_id) {
-			return res.status(401).json({ error: "Missing id credential" });
+		const schema = Joi.object({
+			_id: Joi.string().required(),
+			description: Joi.string(),
+			project: Joi.string(),
+			user: Joi.string(),
+			startedAt: Joi.date(),
+			endedAt: Joi.date(),
+		});
+
+		const validation = schema.validate({
+			description,
+			project,
+			user,
+			startedAt,
+			endedAt,
+		});
+
+		if (validation.error) {
+			return res.status(401).json({ error: "Invalid Credentials" });
 		}
 
 		let taskDoc = await Task.findById(_id);
@@ -55,13 +91,13 @@ const editTaskAdmin = async (req, res) => {
 		if (project) {
 			const projectDoc = await Project.findById(project);
 			if (!projectDoc) {
-				return res.status(404).json({ error: "Invalid project" });
+				return res.status(404).json({ error: "Project not found" });
 			}
 		}
 		if (user) {
 			const userDoc = await User.findById(user);
 			if (!userDoc) {
-				return res.status(404).json({ error: "Invalid user" });
+				return res.status(404).json({ error: "User not found" });
 			}
 		}
 
@@ -75,10 +111,10 @@ const editTaskAdmin = async (req, res) => {
 
 		return res
 			.status(200)
-			.json({ message: "Updated created successfully", taskDoc });
+			.json({ message: "Updated Task successfully", taskDoc });
 	} catch (err) {
 		console.error(err);
-		return res.status(500).json({ error: "Edit Task Admin error" });
+		return res.status(500).json({ error: "Cannot edit Task" });
 	}
 };
 
@@ -95,7 +131,7 @@ const deleteTaskAdmin = async (req, res) => {
 		return res.status(200).json({ message: "Task deleted successfully" });
 	} catch (err) {
 		console.error(err);
-		return res.status(500).json({ error: "Delete Task Admin error" });
+		return res.status(500).json({ error: "Cannot delete Task" });
 	}
 };
 
@@ -107,7 +143,7 @@ const getAllTaskAdmin = async (req, res) => {
 			.json({ taskDocs, messsage: "Tasks sent successfully" });
 	} catch (err) {
 		console.error(err);
-		return res.status(500).json({ error: "Get All Task Admin error" });
+		return res.status(500).json({ error: "Cannot get Task" });
 	}
 };
 
@@ -123,11 +159,11 @@ const getTaskAdmin = async (req, res) => {
 			.json({ message: "Task sent successfully", taskDoc });
 	} catch (err) {
 		console.error(err);
-		return res.status(500).json({ error: "Get Task Admin error" });
+		return res.status(500).json({ error: "Cannot get Task" });
 	}
 };
 
-module.exports = {
+export {
 	addTaskAdmin,
 	getAllTaskAdmin,
 	getTaskAdmin,

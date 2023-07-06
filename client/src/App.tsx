@@ -1,35 +1,86 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import { useEffect, useState } from "react";
+import Header from "./components/Header";
+import Sidebar from "./components/Sidebar";
+import MainView from "./components/MainView";
+import { Route, Routes, json } from "react-router-dom";
+import api from "./api/api";
+import Login from "./components/Login";
+import UserRoute from "./components/user/UserRoute";
+import AdminRoute from "./components/admin/AdminRoute";
+import ProfileView from "./components/views/ProfileView";
+import HomeView from "./components/views/HomeView";
+import TaskView from "./components/views/TaskView";
+import ProjectView from "./components/views/ProjectView";
+import UserView from "./components/views/UserView";
+import UserDashLayout from "./components/Layout/UserDashLayout";
+
+export type User = {
+	_id: string;
+	name: string;
+	email: string;
+	empID: string;
+	roles: string;
+};
 
 function App() {
-  const [count, setCount] = useState(0)
+	const [isLoggedIn, setIsLoggedIn] = useState(false);
+	const [userInfo, setUserInfo] = useState<User>(() => {
+		if (localStorage["userInfo"]) {
+			const info = JSON.parse(localStorage.getItem("userInfo") || "");
+			setIsLoggedIn(true);
+			return info;
+		}
+		return {
+			name: "",
+			_id: "",
+			email: "",
+			empID: "",
+			roles: "",
+		};
+	});
 
-  return (
-    <>
-      <div>
-        <a href="https://vitejs.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
+	return (
+		<div className='w-full h-screen bg-[#f8f8f8] font-sans grid grid-cols-10 grid-rows-10'>
+			<Header
+				isLoggedIn={isLoggedIn}
+				setIsLoggedIn={setIsLoggedIn}
+				userInfo={userInfo}
+			/>
+			<Routes>
+				<Route path='/' element={<UserRoute isLoggedIn={isLoggedIn} />}>
+					<Route index element={<HomeView />} />
+					<Route
+						path='dash'
+						element={<UserDashLayout userInfo={userInfo} />}>
+						<Route
+							index
+							element={<ProfileView userInfo={userInfo} />}
+						/>
+						<Route path='task' element={<TaskView />} />
+						<Route path='project' element={<ProjectView />} />
+					</Route>
+					<Route
+						path='admin'
+						element={<AdminRoute userInfo={userInfo} />}>
+						<Route index element={<TaskView />} />
+						<Route path='project' element={<ProjectView />} />
+						<Route path='user' element={<UserView />} />
+					</Route>
+				</Route>
+				<Route
+					path='/login'
+					element={
+						<Login
+							setIsLoggedIn={setIsLoggedIn}
+							setUserInfo={setUserInfo}
+						/>
+					}
+				/>
+			</Routes>
+			{/* <Sidebar userInfo={userInfo} />
+			<MainView userInfo={userInfo} /> */}
+		</div>
+	);
 }
 
-export default App
+export default App;

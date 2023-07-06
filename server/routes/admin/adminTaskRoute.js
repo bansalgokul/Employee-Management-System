@@ -1,16 +1,15 @@
-const express = require("express");
-const router = express.Router();
-const adminTaskController = require("../../controllers/admin/adminTaskController");
+import { Router } from "express";
+const router = Router();
+import {
+	addTaskAdmin,
+	getAllTaskAdmin,
+	editTaskAdmin,
+	getTaskAdmin,
+	deleteTaskAdmin,
+} from "../../controllers/admin/adminTaskController.js";
 
-router
-	.route("/")
-	.post(adminTaskController.addTaskAdmin)
-	.get(adminTaskController.getAllTaskAdmin)
-	.put(adminTaskController.editTaskAdmin);
+router.route("/").post(addTaskAdmin).get(getAllTaskAdmin).put(editTaskAdmin);
 
-router
-	.route("/:id")
-	.get(adminTaskController.getTaskAdmin)
-	.delete(adminTaskController.deleteTaskAdmin);
+router.route("/:id").get(getTaskAdmin).delete(deleteTaskAdmin);
 
-module.exports = router;
+export default router;

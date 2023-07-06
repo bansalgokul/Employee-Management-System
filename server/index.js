@@ -1,11 +1,20 @@
-const mongoose = require("mongoose");
-const connectDB = require("./config/dbConfig");
-const express = require("express");
-const app = express();
-require("dotenv").config();
+import mongoose from "mongoose";
+import connectDB from "./config/dbConfig.js";
+import express from "express";
+import dotenv from "dotenv";
+import cors from "cors";
 
-const indexRoute = require("./routes/indexRoute");
-const cookieParser = require("cookie-parser");
+import indexRoute from "./routes/indexRoute.js";
+import cookieParser from "cookie-parser";
+
+const app = express();
+dotenv.config();
+
+const corsConfig = {
+	origin: true,
+	credentials: true,
+};
+app.use(cors(corsConfig));
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));

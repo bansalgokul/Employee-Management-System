@@ -1,12 +1,31 @@
-const Project = require("../../models/Project");
-const User = require("../../models/User");
-// Admin
+import Project from "../../models/Project.js";
+import User from "../../models/User.js";
+import Joi from "joi";
 
 const addProjectAdmin = async (req, res) => {
 	try {
 		const { title, description, assignees, completed } = req.body;
-		if (!title || !description) {
-			return res.status(401).json({ error: "Missing req credentials" });
+
+		const schema = Joi.object({
+			title: Joi.string().required(),
+			description: Joi.string().required(),
+			completed: Joi.boolean(),
+			assignees: Joi.array().items(
+				Joi.object({
+					user: Joi.string(),
+				}),
+			),
+		});
+
+		const validation = schema.validate({
+			title,
+			description,
+			completed,
+			assignees,
+		});
+		if (validation.error) {
+			console.log(validation);
+			return res.status(401).json({ error: "Invalid Credentials" });
 		}
 
 		const assigned = [];
@@ -14,7 +33,9 @@ const addProjectAdmin = async (req, res) => {
 			for (const assignee of assignees) {
 				const userDoc = await User.findById(assignee.user);
 				if (!userDoc) {
-					return res.status(404).json({ error: "Invalid assignees" });
+					return res
+						.status(404)
+						.json({ error: "Assignees not found" });
 				}
 				assigned.push({ user: assignee.user });
 			}
@@ -35,20 +56,41 @@ const addProjectAdmin = async (req, res) => {
 		});
 	} catch (err) {
 		console.error(err);
-		return res.status(500).json({ error: "Create Project Admin error" });
+		return res.status(500).json({ error: "Failed to create project" });
 	}
 };
 
 const editProjectAdmin = async (req, res) => {
 	try {
 		const { _id, title, description, assignees, completed } = req.body;
-		if (!_id) {
-			return res.status(401).json({ error: "Missing credentials" });
+
+		const schema = Joi.object({
+			_id: Joi.string().required(),
+			title: Joi.string(),
+			description: Joi.string(),
+			completed: Joi.boolean(),
+			assignees: Joi.array().items(
+				Joi.object({
+					user: Joi.string(),
+				}),
+			),
+		});
+
+		const validation = schema.validate({
+			_id,
+			title,
+			description,
+			completed,
+			assignees,
+		});
+		if (validation.error) {
+			console.log(validation);
+			return res.status(401).json({ error: "Invalid Credentials" });
 		}
 
 		let projectDoc = await Project.findById(_id);
 		if (!projectDoc) {
-			return res.status(404).json({ error: "Invalid project" });
+			return res.status(404).json({ error: "Project not found" });
 		}
 
 		const assigned = [];
@@ -56,7 +98,9 @@ const editProjectAdmin = async (req, res) => {
 			for (const assignee of assignees) {
 				const userDoc = await User.findById(assignee.user);
 				if (!userDoc) {
-					return res.status(404).json({ error: "Invalid assignees" });
+					return res
+						.status(404)
+						.json({ error: "Assignees not found" });
 				}
 				assigned.push({ user: assignee.user });
 			}
@@ -86,7 +130,7 @@ const editProjectAdmin = async (req, res) => {
 		});
 	} catch (err) {
 		console.error(err);
-		return res.status(500).json({ error: "Edit Project Admin error" });
+		return res.status(500).json({ error: "Cannot update project" });
 	}
 };
 
@@ -105,7 +149,7 @@ const deleteProjectAdmin = async (req, res) => {
 			.json({ message: "Project deleted successfully" });
 	} catch (err) {
 		console.error(err);
-		return res.status(500).json({ error: "Delete Project Admin error" });
+		return res.status(500).json({ error: "Cannot delete project" });
 	}
 };
 
@@ -117,7 +161,7 @@ const getAllProjectAdmin = async (req, res) => {
 			.json({ projectDocs, messsage: "Projects sent successfully" });
 	} catch (err) {
 		console.error(err);
-		return res.status(500).json({ error: "Get All Project Admin error" });
+		return res.status(500).json({ error: "Cannot get projects" });
 	}
 };
 
@@ -133,11 +177,11 @@ const getProjectAdmin = async (req, res) => {
 			.json({ message: "Project sent successfully", projectDoc });
 	} catch (err) {
 		console.error(err);
-		return res.status(500).json({ error: "Get Project Admin error" });
+		return res.status(500).json({ error: "Cannot get project" });
 	}
 };
 
-module.exports = {
+export {
 	addProjectAdmin,
 	editProjectAdmin,
 	deleteProjectAdmin,

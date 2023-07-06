@@ -1,16 +1,16 @@
-const express = require("express");
-const router = express.Router();
+import { Router } from "express";
+const router = Router();
 
-const registerRoute = require("./registerRoute");
-const authRoute = require("./authRoute");
-const taskRoute = require("./user/taskRoute");
-const projectRoute = require("./user/projectRoute");
-const adminTaskRoute = require("./admin/adminTaskRoute");
-const adminProjectRoute = require("./admin/adminProjectRoute");
-const adminUserRoute = require("./admin/adminUserRoute");
+import registerRoute from "./registerRoute.js";
+import authRoute from "./authRoute.js";
+import taskRoute from "./user/taskRoute.js";
+import projectRoute from "./user/projectRoute.js";
+import adminTaskRoute from "./admin/adminTaskRoute.js";
+import adminProjectRoute from "./admin/adminProjectRoute.js";
+import adminUserRoute from "./admin/adminUserRoute.js";
 
-const verifyJWT = require("../middleware/verifyJWT");
-const accessCheck = require("../middleware/accessCheck");
+import verifyJWT from "../middleware/verifyJWT.js";
+import accessCheck from "../middleware/accessCheck.js";
 
 router.use("/auth", authRoute);
 
@@ -26,4 +26,4 @@ router.use("/admin/task", adminTaskRoute);
 router.use("/admin/project", adminProjectRoute);
 router.use("/admin/user", adminUserRoute);
 
-module.exports = router;
+export default router;

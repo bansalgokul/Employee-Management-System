@@ -1,4 +1,4 @@
-const mongoose = require("mongoose");
+import mongoose from "mongoose";
 const { Schema, model } = mongoose;
 
 const projectSchema = new Schema({
@@ -18,6 +18,7 @@ const projectSchema = new Schema({
 				type: Schema.Types.ObjectId,
 				required: true,
 			},
+			_id: false,
 		},
 	],
 
@@ -29,4 +30,4 @@ const projectSchema = new Schema({
 
 const Project = model("Project", projectSchema);
 
-module.exports = Project;
+export default Project;

@@ -1,19 +1,20 @@
-const User = require("../../models/User");
-
-const editUserSchema = Joi.object({
-	_id: Joi.string().required(),
-	name: Joi.string(),
-	email: Joi.string().email(),
-	password: Joi.string().min(6),
-	empID: Joi.string().pattern(/^EMP-/),
-	roles: Joi.array().items(Joi.string()),
-});
+import User from "../../models/User.js";
+import Joi from "joi";
 
 const editUser = async (req, res) => {
 	try {
 		const { _id, name, email, password, empID, roles } = req.body;
 
-		const validation = editUserSchema.validate({
+		const schema = Joi.object({
+			_id: Joi.string().required(),
+			name: Joi.string(),
+			email: Joi.string().email(),
+			password: Joi.string().min(6),
+			empID: Joi.string().pattern(/^EMP-/),
+			roles: Joi.array().items(Joi.string()),
+		});
+
+		const validation = schema.validate({
 			_id,
 			name,
 			email,
@@ -52,10 +53,10 @@ const editUser = async (req, res) => {
 		const userDoc = await User.findByIdAndUpdate(_id, updateField, {
 			new: true,
 		});
-		return res.status(200).json({ message: "Update user successful" });
+		return res.status(200).json({ message: "Updated user successfully" });
 	} catch (err) {
 		console.error(err);
-		return res.status(500).json({ error: "Edit User Admin error" });
+		return res.status(500).json({ error: "Cannot edit user" });
 	}
 };
 
@@ -69,7 +70,7 @@ const deleteUser = async (req, res) => {
 			.json({ message: "User deleted successfully", response });
 	} catch (err) {
 		console.error(err);
-		return res.status(500).json({ error: "Delete User Admin error" });
+		return res.status(500).json({ error: "Cannot delete User" });
 	}
 };
 
@@ -79,8 +80,8 @@ const getAllUser = async (req, res) => {
 		return res.status(200).json({ message: "User docs", userDocs });
 	} catch (err) {
 		console.error(err);
-		return res.status(500).json({ error: "Get All User Admin error" });
+		return res.status(500).json({ error: "Cannot get Users" });
 	}
 };
 
-module.exports = { editUser, deleteUser, getAllUser };
+export { editUser, deleteUser, getAllUser };

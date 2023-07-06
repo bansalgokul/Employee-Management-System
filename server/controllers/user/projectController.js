@@ -1,4 +1,4 @@
-const Project = require("../../models/Project");
+import Project from "../../models/Project.js";
 
 const getAllProject = async (req, res) => {
 	try {
@@ -17,7 +17,7 @@ const getAllProject = async (req, res) => {
 		return res.status(200).json({ projectDocs });
 	} catch (err) {
 		console.error(err);
-		return res.status(500).json({ error: "Get All Project error" });
+		return res.status(500).json({ error: "Cannot get Project" });
 	}
 };
 
@@ -42,8 +42,8 @@ const getProject = async (req, res) => {
 		return res.status(200).json({ projectDoc });
 	} catch (err) {
 		console.error(err);
-		return res.status(500).json({ error: "Get Project error" });
+		return res.status(500).json({ error: "Cannot get Project" });
 	}
 };
 
-module.exports = { getAllProject, getProject };
+export { getAllProject, getProject };

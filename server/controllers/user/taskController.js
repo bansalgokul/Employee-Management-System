@@ -1,26 +1,19 @@
-const Project = require("../../models/Project");
-const Task = require("../../models/Task");
-const Joi = require("joi");
-
-const addTaskSchema = Joi.object({
-	description: Joi.string().required(),
-	project: Joi.string().required(),
-	startedAt: Joi.date().iso().required(),
-});
-const editTaskSchema = Joi.object({
-	_id: Joi.string().required(),
-	description: Joi.string(),
-	project: Joi.string(),
-	startedAt: Joi.date().iso(),
-	endedAt: Joi.date().iso(),
-});
+import Project from "../../models/Project.js";
+import Joi from "joi";
+import Task from "../../models/Task.js";
 
 const addTask = async (req, res) => {
 	try {
 		const { description, project, startedAt } = req.body;
 		const user = req.user;
 
-		const validation = addTaskSchema.validate({
+		const schema = Joi.object({
+			description: Joi.string().required(),
+			project: Joi.string().required(),
+			startedAt: Joi.date().iso().required(),
+		});
+
+		const validation = schema.validate({
 			description,
 			project,
 			startedAt,
@@ -46,7 +39,7 @@ const addTask = async (req, res) => {
 
 		const projectDoc = await Project.findById(project);
 		if (!projectDoc) {
-			return res.status(401).json({ error: "Invalid project" });
+			return res.status(404).json({ error: "Project not found" });
 		}
 
 		const taskDoc = await Task.create({
@@ -61,7 +54,7 @@ const addTask = async (req, res) => {
 			.json({ message: "Task created successfully", taskDoc });
 	} catch (err) {
 		console.error(err);
-		return res.status(500).json({ error: "New Task error" });
+		return res.status(500).json({ error: "Cannot create Task" });
 	}
 };
 
@@ -70,7 +63,15 @@ const editTask = async (req, res) => {
 		const { _id, description, project, startedAt, endedAt } = req.body;
 		const user = req.user;
 
-		const validation = editTaskSchema.validate({
+		const schema = Joi.object({
+			_id: Joi.string().required(),
+			description: Joi.string(),
+			project: Joi.string(),
+			startedAt: Joi.date().iso(),
+			endedAt: Joi.date().iso(),
+		});
+
+		const validation = schema.validate({
 			_id,
 			description,
 			project,
@@ -91,7 +92,7 @@ const editTask = async (req, res) => {
 		if (project) {
 			const projectDoc = await Project.findById(project);
 			if (!projectDoc) {
-				return res.status(401).json({ error: "Invalid project" });
+				return res.status(404).json({ error: "Project not found" });
 			}
 		}
 
@@ -102,7 +103,7 @@ const editTask = async (req, res) => {
 			startedAtDate = new Date(startedAt);
 			if (startedAtDate < today || startedAtDate > tommorow) {
 				return res.status(401).json({
-					error: "Start date invalid",
+					error: "Invalid start date",
 				});
 			}
 		}
@@ -110,7 +111,7 @@ const editTask = async (req, res) => {
 			endedAtDate = new Date(endedAt);
 			if (endedAtDate < today || endedAtDate > tommorow) {
 				return res.status(401).json({
-					error: "End date invalid",
+					error: "Invalid end date",
 				});
 			}
 		}
@@ -138,7 +139,7 @@ const editTask = async (req, res) => {
 			.json({ message: "Task created successfully", taskDoc });
 	} catch (err) {
 		console.error(err);
-		return res.status(500).json({ error: "Edit Task error" });
+		return res.status(500).json({ error: "Cannot edit Task" });
 	}
 };
 
@@ -163,7 +164,7 @@ const deleteTask = async (req, res) => {
 		return res.status(200).json({ message: "Task deleted successfully" });
 	} catch (err) {
 		console.error(err);
-		return res.status(500).json({ error: "Delete Task error" });
+		return res.status(500).json({ error: "Cannot delete Task" });
 	}
 };
 
@@ -177,7 +178,7 @@ const getAllTask = async (req, res) => {
 			.json({ taskDocs, messsage: "Tasks sent successfully" });
 	} catch (err) {
 		console.error(err);
-		return res.status(500).json({ error: "Get All Task error" });
+		return res.status(500).json({ error: "Cannot get Tasks" });
 	}
 };
 
@@ -199,16 +200,8 @@ const getTask = async (req, res) => {
 			.json({ message: "Task sent successfully", taskDoc });
 	} catch (err) {
 		console.error(err);
-		return res.status(500).json({ error: "Get Task error" });
+		return res.status(500).json({ error: "Cannot get Task" });
 	}
 };
 
-// Admin
-
-module.exports = {
-	addTask,
-	editTask,
-	deleteTask,
-	getAllTask,
-	getTask,
-};
+export { addTask, editTask, deleteTask, getAllTask, getTask };
