@@ -8,10 +8,10 @@ type Props = {
 
 const UserDashLayout = ({ userInfo }: Props) => {
 	return (
-		<div>
+		<>
 			<Sidebar userInfo={userInfo} />
 			<Outlet />
-		</div>
+		</>
 	);
 };
 
