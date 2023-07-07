@@ -137,7 +137,7 @@ const deleteTaskAdmin = async (req, res) => {
 
 const getAllTaskAdmin = async (req, res) => {
 	try {
-		const taskDocs = await Task.find();
+		const taskDocs = await Task.find().populate(["project", "user"]);
 		return res
 			.status(200)
 			.json({ taskDocs, messsage: "Tasks sent successfully" });

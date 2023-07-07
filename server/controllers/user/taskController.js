@@ -172,7 +172,10 @@ const getAllTask = async (req, res) => {
 	try {
 		const user = req.user;
 
-		const taskDocs = await Task.find({ user: user._id });
+		const taskDocs = await Task.find({ user: user._id }).populate([
+			"user",
+			"project",
+		]);
 		return res
 			.status(200)
 			.json({ taskDocs, messsage: "Tasks sent successfully" });
@@ -186,7 +189,7 @@ const getTask = async (req, res) => {
 	try {
 		const { id } = req.params;
 		const user = req.user;
-		const taskDoc = await Task.findById(id);
+		const taskDoc = await Task.findById(id).populate(["user", "project"]);
 		if (!taskDoc) {
 			return res.status(404).json({ error: "Task not found" });
 		}

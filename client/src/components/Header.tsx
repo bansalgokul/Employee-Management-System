@@ -5,7 +5,7 @@ import { RiAdminLine } from "react-icons/ri";
 import { RxDashboard } from "react-icons/rx";
 import { Link, useNavigate } from "react-router-dom";
 import { User } from "../App";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 type Props = {
 	isLoggedIn: boolean;
@@ -24,13 +24,16 @@ const Header = ({ isLoggedIn, userInfo, setIsLoggedIn }: Props) => {
 	const handleLogout = () => {
 		localStorage.clear();
 		setIsLoggedIn(false);
+		handleToggleDropdown();
 		navigate("/login");
 	};
 
 	return (
 		<div className='col-start-1 col-end-11 row-span-1 row-start-1 flex justify-between items-center px-8 py-3 text-gray-900 bg-white shadow-md relative'>
 			<div>
-				<h1 className='text-3xl font-bold'>UMS</h1>
+				<Link to='/'>
+					<h1 className='text-3xl font-bold'>UMS</h1>
+				</Link>
 			</div>
 
 			{!isLoggedIn ? (
@@ -45,7 +48,9 @@ const Header = ({ isLoggedIn, userInfo, setIsLoggedIn }: Props) => {
 			) : (
 				<nav className=''>
 					<ul className='flex items-center gap-2'>
-						<li className='text-md font-semibold'>Hi, User</li>
+						<li className='text-md font-semibold'>
+							Hi, {userInfo?.name}
+						</li>
 						<li className='relative'>
 							<img
 								src={Profile}
@@ -54,9 +59,10 @@ const Header = ({ isLoggedIn, userInfo, setIsLoggedIn }: Props) => {
 								onClick={handleToggleDropdown}
 							/>
 							{isDropDownOpen && (
-								<ul className='absolute right-0 w-48 bg-white border-2 text-gray-600 shadow-md rounded-md border-gray-100 p-2 mt-2'>
+								<ul className='absolute z-10 right-0 w-48 bg-white border-2 text-gray-600 shadow-md rounded-md border-gray-100 p-2 mt-2'>
 									<li className='flex'>
 										<Link
+											onClick={handleToggleDropdown}
 											to='/dash'
 											className='flex items-center w-full px-2 py-1 gap-2 text-sm font-semibold transition-colors duration-150 rounded-md hover:bg-gray-100 hover:text-gray-800'>
 											<BiUser />
@@ -65,6 +71,7 @@ const Header = ({ isLoggedIn, userInfo, setIsLoggedIn }: Props) => {
 									</li>
 									<li className='flex'>
 										<Link
+											onClick={handleToggleDropdown}
 											to='/dash/task'
 											className='flex gap-2 items-center w-full px-2 py-1 text-sm font-semibold transition-colors duration-150 rounded-md hover:bg-gray-100 hover:text-gray-800'>
 											<RxDashboard />
@@ -74,6 +81,7 @@ const Header = ({ isLoggedIn, userInfo, setIsLoggedIn }: Props) => {
 									{userInfo?.roles === "admin" && (
 										<li className='flex'>
 											<Link
+												onClick={handleToggleDropdown}
 												to='/admin'
 												className='flex gap-2 items-center w-full px-2 py-1 text-sm font-semibold transition-colors duration-150 rounded-md hover:bg-gray-100 hover:text-gray-800'>
 												<RiAdminLine />

@@ -25,13 +25,16 @@ const Login = ({ setUserInfo, setIsLoggedIn }: Props) => {
 		);
 
 		if (response.status === 200) {
-			api.defaults.headers.common.Authorization =
-				response.data.accessToken;
+			api.defaults.headers.common.Authorization = `Bearer ${response.data.accessToken}`;
 			setUserInfo(response.data.userDoc);
 			setIsLoggedIn(true);
 			localStorage.setItem(
 				"userInfo",
 				JSON.stringify(response.data.userDoc),
+			);
+			localStorage.setItem(
+				"accessToken",
+				JSON.stringify(response.data.accessToken),
 			);
 
 			navigate("/");

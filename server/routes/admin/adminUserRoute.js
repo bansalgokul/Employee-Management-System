@@ -6,8 +6,8 @@ import {
 	deleteUser,
 } from "../../controllers/admin/adminUserController.js";
 
-router.put("/", editUser);
+router.put("/", editUser).get("/", getAllUser);
 
-router.route("/:id").get(getAllUser).delete(deleteUser);
+router.route("/:id").delete(deleteUser);
 
 export default router;
