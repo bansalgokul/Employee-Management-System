@@ -4,19 +4,21 @@ import Task from "../../models/Task.js";
 
 const addTask = async (req, res) => {
 	try {
-		const { description, project, startedAt } = req.body;
+		const { description, project, startedAt, endedAt } = req.body;
 		const user = req.user;
 
 		const schema = Joi.object({
 			description: Joi.string().required(),
 			project: Joi.string().required(),
 			startedAt: Joi.date().iso().required(),
+			endedAt: Joi.date().iso().required(),
 		});
 
 		const validation = schema.validate({
 			description,
 			project,
 			startedAt,
+			endedAt,
 		});
 		if (validation.error) {
 			return res.status(401).json({ error: "Invalid Credentials" });
@@ -42,12 +44,14 @@ const addTask = async (req, res) => {
 			return res.status(404).json({ error: "Project not found" });
 		}
 
-		const taskDoc = await Task.create({
+		let taskDoc = await Task.create({
 			description,
 			project,
 			user: user._id,
 			startedAt: startedAtDate,
+			endedAt,
 		});
+		await taskDoc.populate(["user", "project"]);
 
 		return res
 			.status(201)
@@ -133,7 +137,7 @@ const editTask = async (req, res) => {
 		taskDoc = await Task.findByIdAndUpdate(_id, updateFields, {
 			new: true,
 		});
-
+		await taskDoc.populate(["user", "project"]);
 		return res
 			.status(200)
 			.json({ message: "Task created successfully", taskDoc });

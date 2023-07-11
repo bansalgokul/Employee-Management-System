@@ -10,11 +10,7 @@ const addProjectAdmin = async (req, res) => {
 			title: Joi.string().required(),
 			description: Joi.string().required(),
 			completed: Joi.boolean(),
-			assignees: Joi.array().items(
-				Joi.object({
-					user: Joi.string(),
-				}),
-			),
+			assignees: Joi.array().items(Joi.object()),
 		});
 
 		const validation = schema.validate({
@@ -49,6 +45,7 @@ const addProjectAdmin = async (req, res) => {
 		};
 
 		const projectDoc = await Project.create(addFields);
+		await projectDoc.populate("assigned.user");
 
 		return res.status(201).json({
 			message: "Project created successfully",
@@ -69,11 +66,7 @@ const editProjectAdmin = async (req, res) => {
 			title: Joi.string(),
 			description: Joi.string(),
 			completed: Joi.boolean(),
-			assignees: Joi.array().items(
-				Joi.object({
-					user: Joi.string(),
-				}),
-			),
+			assignees: Joi.array().items(Joi.object()),
 		});
 
 		const validation = schema.validate({
@@ -105,6 +98,7 @@ const editProjectAdmin = async (req, res) => {
 				assigned.push({ user: assignee.user });
 			}
 		}
+		console.log(assignees);
 		const updateFields = {};
 		if (title) {
 			updateFields.title = title;
@@ -123,10 +117,11 @@ const editProjectAdmin = async (req, res) => {
 		const response = await Project.findByIdAndUpdate(_id, updateFields, {
 			new: true,
 		});
+		await response.populate("assigned.user");
 
 		return res.status(200).json({
 			message: "Project updated successfully",
-			response,
+			projectDoc: response,
 		});
 	} catch (err) {
 		console.error(err);
@@ -155,7 +150,7 @@ const deleteProjectAdmin = async (req, res) => {
 
 const getAllProjectAdmin = async (req, res) => {
 	try {
-		const projectDocs = await Project.find();
+		const projectDocs = await Project.find().populate("assigned.user");
 		return res
 			.status(200)
 			.json({ projectDocs, messsage: "Projects sent successfully" });
@@ -168,7 +163,7 @@ const getAllProjectAdmin = async (req, res) => {
 const getProjectAdmin = async (req, res) => {
 	try {
 		const { id } = req.params;
-		const projectDoc = await Project.findById(id);
+		const projectDoc = await Project.findById(id).populate("assigned.user");
 		if (!projectDoc) {
 			return res.status(400).json({ error: "Project not found" });
 		}

@@ -6,7 +6,7 @@ const getAllProject = async (req, res) => {
 
 		const projectDocs = await Project.find({
 			"assigned.user": user._id,
-		});
+		}).populate("assigned.user");
 
 		if (!projectDocs) {
 			return res

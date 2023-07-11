@@ -1,10 +1,10 @@
 import { Outlet } from "react-router-dom";
-import UserSidebar from "./UserSidebar";
+import AdminSidebar from "./AdminSidebar";
 
-const UserDashLayout = () => {
+const AdminDashLayout = () => {
 	return (
 		<>
-			<UserSidebar />
+			<AdminSidebar />
 			<div className='col-start-2 col-end-11 row-start-2 row-end-11 p-6'>
 				<Outlet />
 			</div>
@@ -12,4 +12,4 @@ const UserDashLayout = () => {
 	);
 };
 
-export default UserDashLayout;
+export default AdminDashLayout;

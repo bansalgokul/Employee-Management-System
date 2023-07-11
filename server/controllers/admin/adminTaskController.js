@@ -59,22 +59,20 @@ const addTaskAdmin = async (req, res) => {
 
 const editTaskAdmin = async (req, res) => {
 	try {
-		const { _id, description, project, startedAt, endedAt, user } =
-			req.body;
+		const { _id, description, project, startedAt, endedAt } = req.body;
 
 		const schema = Joi.object({
 			_id: Joi.string().required(),
 			description: Joi.string(),
 			project: Joi.string(),
-			user: Joi.string(),
 			startedAt: Joi.date(),
 			endedAt: Joi.date(),
 		});
 
 		const validation = schema.validate({
+			_id,
 			description,
 			project,
-			user,
 			startedAt,
 			endedAt,
 		});
@@ -94,12 +92,6 @@ const editTaskAdmin = async (req, res) => {
 				return res.status(404).json({ error: "Project not found" });
 			}
 		}
-		if (user) {
-			const userDoc = await User.findById(user);
-			if (!userDoc) {
-				return res.status(404).json({ error: "User not found" });
-			}
-		}
 
 		const updateFields = {};
 		if (description) updateFields.description = description;
@@ -107,8 +99,10 @@ const editTaskAdmin = async (req, res) => {
 		if (startedAt) updateFields.startedAt = new Date(startedAt);
 		if (endedAt) updateFields.endedAt = new Date(endedAt);
 
-		taskDoc = await taskDoc.updateOne(updateFields, { new: true });
-
+		taskDoc = await Task.findByIdAndUpdate(_id, updateFields, {
+			new: true,
+		});
+		await taskDoc.populate(["user", "project"]);
 		return res
 			.status(200)
 			.json({ message: "Updated Task successfully", taskDoc });
