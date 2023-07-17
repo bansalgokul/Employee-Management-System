@@ -1,5 +1,5 @@
-import { User } from "../../App";
-import Profile from "../../assets/21666259.jpg";
+import Profile from "../../../../assets/21666259.jpg";
+import { User } from "../../../types";
 
 type Props = {
 	userInfo: User;

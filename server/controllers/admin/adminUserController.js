@@ -1,5 +1,6 @@
 import User from "../../models/User.js";
 import Joi from "joi";
+import bcrypt from "bcryptjs";
 
 const editUser = async (req, res) => {
 	try {
@@ -11,7 +12,7 @@ const editUser = async (req, res) => {
 			email: Joi.string().email(),
 			password: Joi.string().min(6),
 			empID: Joi.string().pattern(/^EMP-/),
-			roles: Joi.array().items(Joi.string()),
+			roles: Joi.string(),
 		});
 
 		const validation = schema.validate({
@@ -31,8 +32,6 @@ const editUser = async (req, res) => {
 			return res.status(401).json({ error: "Invalid user" });
 		}
 
-		const hashedPassword = bcyrpt.hashSync(password, process.env.SALT);
-
 		const updateField = {};
 		if (name) {
 			updateField.name = name;
@@ -41,6 +40,7 @@ const editUser = async (req, res) => {
 			updateField.email = email;
 		}
 		if (password) {
+			const hashedPassword = bcrypt.hashSync(password, process.env.SALT);
 			updateField.password = hashedPassword;
 		}
 		if (empID) {
@@ -53,7 +53,9 @@ const editUser = async (req, res) => {
 		const userDoc = await User.findByIdAndUpdate(_id, updateField, {
 			new: true,
 		});
-		return res.status(200).json({ message: "Updated user successfully" });
+		return res
+			.status(200)
+			.json({ message: "Updated user successfully", userDoc });
 	} catch (err) {
 		console.error(err);
 		return res.status(500).json({ error: "Cannot edit user" });

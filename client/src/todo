@@ -1,14 +1,5 @@
 # Todo
 
-- Set the edit task view  
-
-  - For users, only edit and delete tasks of today
-  - For admin, edit and delete any task
-  
-- set the view project for user
-- Set the edit project for admin
-- set the user view for admin
-- Set the duration in home view
 - Set the refresh route on token expiry
 - Set the change password functionality
   

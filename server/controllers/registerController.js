@@ -13,7 +13,7 @@ const newUser = async (req, res) => {
 			email: Joi.string().email().required(),
 			password: Joi.string().min(6).required(),
 			empID: Joi.string().pattern(/^EMP-/).required(),
-			roles: Joi.array().items(Joi.string()).required(),
+			roles: Joi.string().required(),
 		});
 
 		const validation = schema.validate({
@@ -24,6 +24,7 @@ const newUser = async (req, res) => {
 			roles,
 		});
 		if (validation.error) {
+			console.log(validation.error);
 			return res.status(401).json({ error: "Invalid Credentials" });
 		}
 

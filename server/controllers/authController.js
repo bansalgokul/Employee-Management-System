@@ -10,8 +10,14 @@ const login = async (req, res) => {
 		const { email, password } = req.body;
 
 		const schema = Joi.object({
-			email: Joi.string().email().required(),
-			password: Joi.string().min(6).required(),
+			email: Joi.string()
+				.email()
+				.required()
+				.messages({ "string.email": "Invalid Email" }),
+			password: Joi.string()
+				.min(6)
+				.required()
+				.messages({ "string.min": "Password too short. Min 6 char" }),
 		});
 
 		const validation = schema.validate({
@@ -19,7 +25,9 @@ const login = async (req, res) => {
 			password,
 		});
 		if (validation.error) {
-			return res.status(401).json({ error: "Invalid Credentials" });
+			return res
+				.status(401)
+				.json({ error: validation.error.details[0].message });
 		}
 
 		const foundUser = await User.findOne({ email })
@@ -27,7 +35,7 @@ const login = async (req, res) => {
 			.exec();
 
 		if (!foundUser) {
-			return res.status(401).json({ error: "Invalid User" });
+			return res.status(404).json({ error: "User not found" });
 		}
 
 		const match = await bcrypt.compare(password, foundUser.password);

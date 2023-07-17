@@ -3,7 +3,7 @@ const router = Router();
 import { login, logout, refresh } from "../controllers/authController.js";
 
 router.post("/login", login);
-router.post("/logout", logout);
-router.post("/refresh", refresh);
+router.get("/logout", logout);
+router.get("/refresh", refresh);
 
 export default router;

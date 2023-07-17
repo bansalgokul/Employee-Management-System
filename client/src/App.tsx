@@ -1,17 +1,11 @@
 import { useEffect, useState } from "react";
-import Header from "./components/Header";
+import Header from "./components/Shared/Header";
 import { Route, Routes } from "react-router-dom";
 import api from "./api/api";
-import Login from "./components/Login";
+import Login from "./components/Shared/Login";
 import UserRoute from "./components/user/UserRoute";
-
-export type User = {
-	_id: string;
-	name: string;
-	email: string;
-	empID: string;
-	roles: string;
-};
+import { User } from "./components/types";
+import Loading from "./components/Shared/Loading";
 
 function App() {
 	const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -25,13 +19,33 @@ function App() {
 		roles: "",
 	});
 
+	const refreshAccessToken = async () => {
+		try {
+			const response = await api.get("/auth/refresh", {
+				withCredentials: true,
+			});
+
+			if (response.status === 200) {
+				const newAccessToken = response.data.accessToken;
+				api.defaults.headers.common.Authorization = `Bearer ${newAccessToken}`;
+				localStorage.setItem(
+					"accessToken",
+					JSON.stringify(newAccessToken),
+				);
+			}
+		} catch (err) {
+			console.error("Error refreshing access token:", err);
+			localStorage.clear();
+			setIsLoggedIn(false);
+		}
+	};
+
 	useEffect(() => {
 		setLoading(true);
 
-		if (localStorage["accessToken"]) {
-			const token = JSON.parse(localStorage.getItem("accessToken") || "");
-			api.defaults.headers.common.Authorization = `Bearer ${token}`;
-		}
+		refreshAccessToken();
+
+		const refreshInterval = setInterval(refreshAccessToken, 10 * 60 * 1000);
 
 		if (localStorage["userInfo"]) {
 			const info = JSON.parse(localStorage.getItem("userInfo") || "");
@@ -40,11 +54,15 @@ function App() {
 		}
 
 		setLoading(false);
+
+		return () => clearInterval(refreshInterval);
 	}, []);
 
 	return (
 		<div className='w-full h-screen bg-[#f8f8f8] font-sans grid grid-cols-10 grid-rows-10'>
-			{!loading && (
+			{loading ? (
+				<Loading />
+			) : (
 				<>
 					<Header
 						isLoggedIn={isLoggedIn}

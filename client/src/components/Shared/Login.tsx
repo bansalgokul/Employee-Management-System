@@ -1,7 +1,10 @@
 import { useState } from "react";
-import api from "../api/api";
-import { User } from "../App";
+import api from "../../api/api";
 import { useNavigate } from "react-router-dom";
+import { User } from "../types";
+import Button from "./Button";
+import ErrorDisplay from "./ErrorDisplay";
+import { isAxiosError } from "axios";
 
 type Props = {
 	setUserInfo: React.Dispatch<React.SetStateAction<User>>;
@@ -11,35 +14,43 @@ type Props = {
 const Login = ({ setUserInfo, setIsLoggedIn }: Props) => {
 	const [email, setEmail] = useState("");
 	const [password, setPassword] = useState("");
+	const [error, setError] = useState("");
 	const navigate = useNavigate();
 
 	const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
 		e.preventDefault();
-		const response = await api.post(
-			"/auth/login",
-			{
-				email,
-				password,
-			},
-			{ withCredentials: true },
-		);
 
-		if (response.status === 200) {
-			api.defaults.headers.common.Authorization = `Bearer ${response.data.accessToken}`;
-			setUserInfo(response.data.userDoc);
-			setIsLoggedIn(true);
-			localStorage.setItem(
-				"userInfo",
-				JSON.stringify(response.data.userDoc),
-			);
-			localStorage.setItem(
-				"accessToken",
-				JSON.stringify(response.data.accessToken),
+		try {
+			const response = await api.post(
+				"/auth/login",
+				{
+					email,
+					password,
+				},
+				{ withCredentials: true },
 			);
 
-			navigate("/");
+			if (response.status === 200) {
+				api.defaults.headers.common.Authorization = `Bearer ${response.data.accessToken}`;
+				setUserInfo(response.data.userDoc);
+				setIsLoggedIn(true);
+				localStorage.setItem(
+					"userInfo",
+					JSON.stringify(response.data.userDoc),
+				);
+				localStorage.setItem(
+					"accessToken",
+					JSON.stringify(response.data.accessToken),
+				);
+
+				navigate("/");
+			}
+		} catch (err) {
+			if (isAxiosError(err)) {
+				setError(err?.response?.data?.error);
+			}
+			console.log(err);
 		}
-		console.log(response);
 	};
 
 	return (
@@ -53,6 +64,7 @@ const Login = ({ setUserInfo, setIsLoggedIn }: Props) => {
 				</div>
 				<div className='w-1/2'>
 					<form
+						id='loginForm'
 						action=''
 						className='flex flex-col h-full justify-center gap-4'
 						onSubmit={handleLogin}>
@@ -73,11 +85,8 @@ const Login = ({ setUserInfo, setIsLoggedIn }: Props) => {
 							required
 						/>
 
-						<button
-							type='submit'
-							className='w-full bg-[#3B71CA] py-3 text-white text-base font-semibold rounded-lg'>
-							Login
-						</button>
+						{error && <ErrorDisplay error={error} />}
+						<Button name='Login' type='submit' form='loginForm' />
 					</form>
 				</div>
 			</div>
