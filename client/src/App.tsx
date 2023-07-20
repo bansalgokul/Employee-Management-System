@@ -19,43 +19,28 @@ function App() {
 		roles: "",
 	});
 
-	const refreshAccessToken = async () => {
-		try {
-			const response = await api.get("/auth/refresh", {
-				withCredentials: true,
-			});
-
-			if (response.status === 200) {
-				const newAccessToken = response.data.accessToken;
-				api.defaults.headers.common.Authorization = `Bearer ${newAccessToken}`;
-				localStorage.setItem(
-					"accessToken",
-					JSON.stringify(newAccessToken),
-				);
-			}
-		} catch (err) {
-			console.error("Error refreshing access token:", err);
-			localStorage.clear();
-			setIsLoggedIn(false);
-		}
-	};
-
+	// Checking If user is already logged in .
 	useEffect(() => {
 		setLoading(true);
 
-		refreshAccessToken();
-
-		const refreshInterval = setInterval(refreshAccessToken, 10 * 60 * 1000);
-
-		if (localStorage["userInfo"]) {
-			const info = JSON.parse(localStorage.getItem("userInfo") || "");
-			setIsLoggedIn(true);
-			setUserInfo(info);
+		if (localStorage["accessToken"]) {
+			const token = JSON.parse(localStorage.getItem("accessToken") || "");
+			api.defaults.headers.common.Authorization = `Bearer ${token}`;
 		}
+		// Fetch user info with every refresh
 
-		setLoading(false);
+		const getProfle = async () => {
+			const profileResponse = await api.get("/user");
+			if (profileResponse.status === 200) {
+				const userInfo = profileResponse.data.user;
+				localStorage.setItem("userInfo", JSON.stringify(userInfo));
+				setIsLoggedIn(true);
+				setUserInfo(userInfo);
+				setLoading(false);
+			}
+		};
 
-		return () => clearInterval(refreshInterval);
+		getProfle();
 	}, []);
 
 	return (
@@ -69,6 +54,7 @@ function App() {
 						setIsLoggedIn={setIsLoggedIn}
 						userInfo={userInfo}
 					/>
+					{/*Home route with all main functionalities */}
 					<Routes>
 						<Route
 							path='/*'
@@ -79,6 +65,7 @@ function App() {
 								/>
 							}
 						/>
+						{/* Login Route */}
 						<Route
 							path='/login'
 							element={

@@ -1,8 +1,8 @@
 import { Router } from "express";
 const router = Router();
 
-import registerRoute from "./registerRoute.js";
 import authRoute from "./authRoute.js";
+import userRoute from "./user/userRoute.js";
 import taskRoute from "./user/taskRoute.js";
 import projectRoute from "./user/projectRoute.js";
 import adminTaskRoute from "./admin/adminTaskRoute.js";
@@ -16,7 +16,7 @@ router.use("/auth", authRoute);
 
 router.use(verifyJWT);
 
-router.use("/register", registerRoute);
+router.use("/user", userRoute);
 router.use("/task", taskRoute);
 router.use("/project", projectRoute);
 

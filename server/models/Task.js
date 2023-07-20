@@ -27,7 +27,7 @@ const taskSchema = new Schema({
 	endedAt: {
 		type: Schema.Types.Date,
 	},
-});
+}, {timestamps: true});
 
 const Task = model("Task", taskSchema);
 

@@ -1,17 +1,18 @@
-import React from "react";
-
 /* eslint-disable no-mixed-spaces-and-tabs */
 /* eslint-disable react-hooks/exhaustive-deps */
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import api from "../../../../api/api";
-import { format } from "date-fns";
-import { BsChevronDown, BsChevronUp } from "react-icons/bs";
+
 import EditTask from "../EditTask";
 import { Link, useLocation } from "react-router-dom";
-import { Project, Task, User } from "../../../types";
-import Loading from "../../../Shared/Loading";
+import { Project, Task } from "../../../types";
 
-import DateBox from "../../../Shared/Tasks/DateBox";
+import { BiDownArrow } from "react-icons/bi";
+
+import { useDebounce } from "../../../debounce";
+import TaskAllView from "./TaskAllView";
+import TaskUserProjectView from "./TaskUserProjectView";
+import DateFilter from "../../../Shared/DateFilter";
 
 type Props = {
 	taskList: Task[];
@@ -20,50 +21,21 @@ type Props = {
 	setProjectList: React.Dispatch<React.SetStateAction<Project[]>>;
 };
 
-type GroupedTasksUser = {
-	user: User;
-	GroupedTasksDate: {
-		date: string;
-		taskArray: Task[];
-	}[];
-};
-
 const AdminTaskView = ({
 	taskList,
-	setProjectList,
 	setTaskList,
 	projectList,
+	setProjectList,
 }: Props) => {
 	const location = useLocation();
-	const [userListOpen, setUserListOpen] = useState<string | null>(null);
 	const [isEditorOpen, setIsEditorOpen] = useState<Task | null>(null);
 
-	const userID = new URLSearchParams(location.search).get("target");
 	const projectID = new URLSearchParams(location.search).get("ref");
-	const [loading, setLoading] = useState(true);
 
-	useEffect(() => {
-		setLoading(true);
-
-		async function getData() {
-			try {
-				const taskResponse = await api.get("/admin/task");
-				if (taskResponse.status === 200) {
-					taskResponse.data.taskDocs =
-						taskResponse.data.taskDocs.filter(
-							(task: Task) => task.user !== null,
-						);
-					setTaskList(taskResponse.data.taskDocs);
-				}
-				setLoading(false);
-			} catch (error) {
-				console.log("Error fetching Projects:", error);
-			}
-		}
-
-		getData();
-		setUserListOpen(userID);
-	}, []);
+	const [mode, setMode] = useState("All");
+	const [modeDropdown, setModeDropdown] = useState(false);
+	const [search, setSearch] = useState("");
+	const debouncedSearch = useDebounce(search, 500);
 
 	const handleEditClick = (id: string) => {
 		const task = taskList.find((task) => task._id === id);
@@ -79,134 +51,87 @@ const AdminTaskView = ({
 		}
 	};
 
-	const groupTasksByUser = () => {
-		const groupedTasksUser: {
-			[key: string]: GroupedTasksUser;
-		} = {};
-
-		taskList.forEach((task) => {
-			const user = task.user._id;
-			const date = format(new Date(task.startedAt), "dd-MM-yyyy");
-			if (!groupedTasksUser[user]) {
-				groupedTasksUser[user] = {
-					user: task.user,
-					GroupedTasksDate: [],
-				};
-			}
-			if (
-				!groupedTasksUser[user].GroupedTasksDate.find(
-					(group) => group.date === date,
-				)
-			) {
-				groupedTasksUser[user].GroupedTasksDate.push({
-					taskArray: [],
-					date,
-				});
-			}
-
-			groupedTasksUser[user].GroupedTasksDate.find(
-				(group) => group.date === date,
-			)?.taskArray.push(task);
-		});
-
-		return groupedTasksUser;
-	};
-
-	const [groupedTasksUser, setGroupedTasksUser] = useState(
-		groupTasksByUser(),
-	);
-
-	useEffect(() => {
-		setGroupedTasksUser(groupTasksByUser());
-	}, [taskList]);
-
 	return (
-		<div className='flex justify-center h-full px-4 w-full flex-grow relative bg-white shadow-lg rounded-md p-4 '>
-			{loading ? (
-				<Loading />
-			) : (
-				<div className='flex flex-col gap-2 w-full h-full overflow-auto no-scrollbar pt-12'>
-					{isEditorOpen && (
-						<EditTask
-							task={isEditorOpen}
-							setIsEditorOpen={setIsEditorOpen}
-							projectList={projectList}
-							setProjectList={setProjectList}
-							taskList={taskList}
-							setTaskList={setTaskList}
-							isAdminView={true}
+		<div className='flex justify-center h-full px-4 w-full flex-grow relative bg-white shadow-lg rounded-md pb-4 pt-2'>
+			<div className='flex flex-col gap-2 w-full h-full '>
+				{isEditorOpen && (
+					<EditTask
+						task={isEditorOpen}
+						setIsEditorOpen={setIsEditorOpen}
+						projectList={projectList}
+						setProjectList={setProjectList}
+						taskList={taskList}
+						setTaskList={setTaskList}
+						isAdminView={true}
+					/>
+				)}
+				{projectID && (
+					<Link to={`project/?target=${projectID}`}>Back</Link>
+				)}
+				<div className='flex justify-between items-center'>
+					<div className='w-1/3'>
+						<input
+							type='text'
+							className='px-3 py-2 m-1 bg-[#f5f5f5]	w-full rounded-xl'
+							placeholder='Search'
+							autoFocus
+							value={search}
+							onChange={(e) => setSearch(e.target.value)}
 						/>
-					)}
-					{projectID && (
-						<Link to={`project/?target=${projectID}`}>Back</Link>
-					)}
-					<div className='flex justify-between w-full absolute top-0 left-0 z-10 bg-white p-4 border-b-2'>
-						<div className='w-[20%] text-center'>Description</div>
-						<div className='w-[25%] text-center'>Project</div>
-						<div className='w-[15%] text-center'>Start</div>
-						<div className='w-[15%] text-center'>End</div>
-						<div className='w-[20%] text-center'>Duration</div>
-						<div className='w-[5%]'></div>
 					</div>
 
-					<div className='flex flex-col border-b-4 gap-2'>
-						{Object.entries(groupedTasksUser)
-							.sort((a, b) => (a[0] > b[0] ? -1 : 1))
-							.map(([user, groupedTasksUser]) => {
-								return (
-									<div key={user}>
-										<div
-											className='font-semibold text-lg flex bg-[#e0e0e0] px-8 py-1 items-center justify-between'
-											onClick={() =>
-												setUserListOpen((prevUser) =>
-													prevUser === user
-														? null
-														: user,
-												)
-											}>
-											<div>
-												{groupedTasksUser.user.name}
-											</div>
-											<div>
-												{userListOpen === user ? (
-													<BsChevronUp />
-												) : (
-													<BsChevronDown />
-												)}
-											</div>
-										</div>
-										{userListOpen === user &&
-											groupedTasksUser.GroupedTasksDate.sort(
-												(a, b) =>
-													a.date > b.date ? -1 : 1,
-											).map(
-												(
-													{ date, taskArray },
-													index,
-												) => {
-													return (
-														<DateBox
-															key={index}
-															date={date}
-															taskArray={
-																taskArray
-															}
-															handleDeleteClick={
-																handleDeleteClick
-															}
-															handleEditClick={
-																handleEditClick
-															}
-														/>
-													);
-												},
-											)}
-									</div>
-								);
-							})}
+					<div
+						className='relative'
+						onClick={() => setModeDropdown((prev) => !prev)}>
+						<div className='flex items-center gap-2 justify-between w-[100px] px-3 py-2 m-1 bg-[#f5f5f5] rounded-xl'>
+							{mode} <BiDownArrow />
+						</div>
+						{modeDropdown && (
+							<div className='absolute z-10 right-0 top-10 w-[100px] bg-white border-2 text-gray-600 shadow-md rounded-md border-gray-100 p-2 mt-2'>
+								<div
+									className='flex items-center w-full px-2 py-1 gap-2 text-sm font-semibold transition-colors duration-150 rounded-md hover:bg-gray-100 hover:text-gray-800'
+									onClick={() =>
+										mode === "All" || setMode("All")
+									}>
+									All
+								</div>
+								<div
+									className='flex items-center w-full px-2 py-1 gap-2 text-sm font-semibold transition-colors duration-150 rounded-md hover:bg-gray-100 hover:text-gray-800'
+									onClick={() =>
+										mode === "User" || setMode("User")
+									}>
+									User
+								</div>
+								<div
+									className='flex items-center w-full px-2 py-1 gap-2 text-sm font-semibold transition-colors duration-150 rounded-md hover:bg-gray-100 hover:text-gray-800'
+									onClick={() =>
+										mode === "Project" || setMode("Project")
+									}>
+									Project
+								</div>
+							</div>
+						)}
 					</div>
 				</div>
-			)}
+				<div>
+					{mode === "All" && (
+						<TaskAllView
+							search={debouncedSearch}
+							handleDeleteClick={handleDeleteClick}
+							handleEditClick={handleEditClick}
+						/>
+					)}
+					{/* Project Mode */}
+					{(mode === "Project" || mode === "User") && (
+						<TaskUserProjectView
+							mode={mode === "Project" ? "project" : "user"}
+							search={debouncedSearch}
+							handleDeleteClick={handleDeleteClick}
+							handleEditClick={handleEditClick}
+						/>
+					)}
+				</div>
+			</div>
 		</div>
 	);
 };

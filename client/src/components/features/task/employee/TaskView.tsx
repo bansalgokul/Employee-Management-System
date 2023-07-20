@@ -7,6 +7,12 @@ import EditTask from "../EditTask";
 import { Project, Task } from "../../../types";
 import Loading from "../../../Shared/Loading";
 import DateBox from "../../../Shared/Tasks/DateBox";
+import { getUserTasks } from "../../../../api/apiFunctions";
+
+type GroupedTasksDate = {
+	date: string;
+	taskArray: Task[];
+}[];
 
 type Props = {
 	taskList: Task[];
@@ -14,11 +20,6 @@ type Props = {
 	projectList: Project[];
 	setProjectList: React.Dispatch<React.SetStateAction<Project[]>>;
 };
-
-type GroupedTasksDate = {
-	date: string;
-	taskArray: Task[];
-}[];
 
 const TaskView = ({
 	taskList,
@@ -33,21 +34,7 @@ const TaskView = ({
 		setLoading(true);
 
 		async function getData() {
-			try {
-				const taskResponse = await api.get("/task");
-				if (taskResponse.status === 200) {
-					taskResponse.data.taskDocs =
-						taskResponse.data.taskDocs.filter(
-							(task: Task) =>
-								task.user !== null && task.project !== null,
-						);
-					setTaskList(taskResponse.data.taskDocs);
-				}
-
-				setLoading(false);
-			} catch (error) {
-				console.log("Error fetching Projects:", error);
-			}
+			await getUserTasks(setTaskList);
 		}
 
 		getData();
@@ -90,7 +77,6 @@ const TaskView = ({
 
 	useEffect(() => {
 		setGroupedTasks(groupTasksByDate);
-		console.log("setting grouped tasks");
 	}, [taskList]);
 
 	return (

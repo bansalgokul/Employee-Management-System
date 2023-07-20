@@ -9,13 +9,9 @@ import { Project, Task, User } from "../types";
 
 type Props = {
 	userInfo: User;
-	taskList: Task[];
-	setTaskList: React.Dispatch<React.SetStateAction<Task[]>>;
-	projectList: Project[];
-	setProjectList: React.Dispatch<React.SetStateAction<Project[]>>;
 };
 
-const AdminRoute = ({ userInfo, setTaskList, setProjectList }: Props) => {
+const AdminRoute = ({ userInfo }: Props) => {
 	const [adminTaskList, setAdminTaskList] = useState<Task[]>([]);
 	const [adminProjectList, setAdminProjectList] = useState<Project[]>([]);
 	const [userList, setUserList] = useState<User[]>([]);
@@ -30,7 +26,8 @@ const AdminRoute = ({ userInfo, setTaskList, setProjectList }: Props) => {
 				if (taskResponse.status === 200) {
 					taskResponse.data.taskDocs =
 						taskResponse.data.taskDocs.filter(
-							(task: Task) => task.user !== null,
+							(task: Task) =>
+								task.user !== null && task.project !== null,
 						);
 					setAdminTaskList(taskResponse.data.taskDocs);
 				}
@@ -57,19 +54,7 @@ const AdminRoute = ({ userInfo, setTaskList, setProjectList }: Props) => {
 		getData();
 	}, []);
 
-	useEffect(() => {
-		setTaskList(() =>
-			adminTaskList.filter((task) => task.user._id === userInfo._id),
-		);
-	}, [adminTaskList, setTaskList, userInfo._id]);
-
-	useEffect(() => {
-		setProjectList(() => {
-			return adminProjectList.filter((p) =>
-				p.assigned.find((user) => user.user?._id === userInfo._id),
-			);
-		});
-	}, [adminProjectList, setProjectList, userInfo._id, userList]);
+	// const deleteUser = () => {};
 
 	if (userInfo.roles !== "admin") return <Navigate to='/' replace />;
 	return (
@@ -92,12 +77,12 @@ const AdminRoute = ({ userInfo, setTaskList, setProjectList }: Props) => {
 							path='project'
 							element={
 								<AdminProjectView
-									userList={userList}
-									setUserList={setUserList}
 									taskList={adminTaskList}
 									setTaskList={setAdminTaskList}
 									projectList={adminProjectList}
 									setProjectList={setAdminProjectList}
+									userList={userList}
+									setUserList={setUserList}
 								/>
 							}
 						/>

@@ -1,24 +1,18 @@
 import { useState, useRef, useEffect } from "react";
 import { GrClose } from "react-icons/gr";
 import api from "../../api/api";
-import { Task, Project } from "../types";
 import Button from "../Shared/Button";
 import { format } from "date-fns";
 import { getDuration } from "../Shared/duration";
+import { Task, Project } from "../types";
 
 type Props = {
 	taskList: Task[];
 	setTaskList: React.Dispatch<React.SetStateAction<Task[]>>;
 	projectList: Project[];
-	setProjectList: React.Dispatch<React.SetStateAction<Project[]>>;
 };
 
-const HomeViewTimer = ({
-	taskList,
-	setTaskList,
-	projectList,
-	setProjectList,
-}: Props) => {
+const HomeViewTimer = ({ taskList, setTaskList, projectList }: Props) => {
 	const [isTimerOn, setIsTimerOn] = useState(false);
 	const [description, setDescription] = useState("");
 	const [project, setProject] = useState(projectList?.[0]?._id);
@@ -90,6 +84,9 @@ const HomeViewTimer = ({
 			setTaskList([...taskList, response.data.taskDoc]);
 		}
 		setDescription("");
+		setHours(new Date().getHours().toString().padStart(2, "0"));
+		setMinutes(new Date().getMinutes().toString().padStart(2, "0"));
+		setSeconds(new Date().getSeconds().toString().padStart(2, "0"));
 	};
 
 	const handleCancel = () => {

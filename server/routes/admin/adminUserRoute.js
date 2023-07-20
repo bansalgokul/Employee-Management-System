@@ -2,11 +2,12 @@ import { Router } from "express";
 const router = Router();
 import {
 	editUser,
-	getAllUser,
 	deleteUser,
+	getAdminUser,
+	newUser,
 } from "../../controllers/admin/adminUserController.js";
 
-router.put("/", editUser).get("/", getAllUser);
+router.route("/").post(newUser).put(editUser).get(getAdminUser);
 
 router.route("/:id").delete(deleteUser);
 

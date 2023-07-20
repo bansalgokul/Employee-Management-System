@@ -4,6 +4,7 @@ export type User = {
 	email: string;
 	empID: string;
 	roles: string;
+	updatedAt?: Date;
 };
 
 export type Project = {
@@ -12,6 +13,7 @@ export type Project = {
 	description: string;
 	completed: boolean;
 	assigned: Array<{ user: User }>;
+	updatedAt: Date;
 };
 
 export type Task = {
@@ -21,4 +23,17 @@ export type Task = {
 	user: User;
 	startedAt: Date;
 	endedAt: Date;
+	updatedAt: Date;
 };
+
+export type GroupedTasksUserItem = {
+	user: User;
+	taskArray: Task[];
+};
+export type GroupedTasksUser = GroupedTasksUserItem[];
+
+export type GroupedTasksProjectItem = {
+	project: Project;
+	taskArray: Task[];
+};
+export type GroupedTasksProject = GroupedTasksProjectItem[];

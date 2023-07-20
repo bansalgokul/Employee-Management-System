@@ -35,10 +35,10 @@ const TaskBox = ({
 			</div>
 
 			<div className='w-[15%] text-center'>
-				{format(new Date(task.startedAt), "KK:mm aaa")}
+				{format(new Date(task.startedAt), "HH:mm aaa")}
 			</div>
 			<div className='w-[15%] text-center'>
-				{format(new Date(task.endedAt), "KK:mm aaa")}
+				{format(new Date(task.endedAt), "HH:mm aaa")}
 			</div>
 			<div className='w-[20%] text-center'>{duration}</div>
 

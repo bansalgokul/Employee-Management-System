@@ -160,19 +160,57 @@ const getAllProjectAdmin = async (req, res) => {
 	}
 };
 
+// search / skip / limit / id
 const getProjectAdmin = async (req, res) => {
-	try {
-		const { id } = req.params;
-		const projectDoc = await Project.findById(id).populate("assigned.user");
-		if (!projectDoc) {
-			return res.status(400).json({ error: "Project not found" });
+	if (req.query) {
+		let { search, id, length, skip, limit } = req.query;
+
+		// To calculate total records in db
+		const projectDocsLength = await Project.countDocuments({
+			title: { $regex: `${search}`, $options: "i" },
+		});
+
+		search = search || "";
+		skip = skip || 0;
+		limit = limit || projectDocsLength;
+
+		if (id) {
+			try {
+				const projectDoc = await Project.findById(id).populate(
+					"assigned.user",
+				);
+				return res.status(200).json({ projectDoc });
+			} catch (err) {
+				console.log(err);
+				return res.status(404).json({ error: "Project not found" });
+			}
 		}
-		return res
-			.status(200)
-			.json({ message: "Project sent successfully", projectDoc });
+
+		try {
+			const projectDocs = await Project.find({
+				title: { $regex: search, $options: "i" },
+			})
+				.sort({ updatedAt: -1 })
+				.skip(skip)
+				.limit(limit)
+				.populate("assigned.user");
+			return res
+				.status(200)
+				.json({ totalRecords: projectDocsLength, projectDocs });
+		} catch (err) {
+			console.log(err);
+			return res.status(404).json({ error: "Projects not found" });
+		}
+	}
+
+	try {
+		const projectDocs = await Project.find()
+			.sort({ updatedAt: -1 })
+			.populate("assigned.user");
+		return res.status(200).json({ projectDocs });
 	} catch (err) {
-		console.error(err);
-		return res.status(500).json({ error: "Cannot get project" });
+		console.log(err);
+		return res.status(404).json({ error: "Projects not found" });
 	}
 };
 

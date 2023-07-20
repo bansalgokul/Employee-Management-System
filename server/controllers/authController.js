@@ -53,7 +53,7 @@ const login = async (req, res) => {
 		};
 
 		const accessToken = jwt.sign(payload, process.env.ACCESS_TOKEN_SECRET, {
-			expiresIn: "150m",
+			expiresIn: "1m",
 		});
 		const refreshToken = jwt.sign(
 			payload,
@@ -119,7 +119,7 @@ const refresh = (req, res) => {
 					payload,
 					process.env.ACCESS_TOKEN_SECRET,
 					{
-						expiresIn: "150m",
+						expiresIn: "1m",
 					},
 				);
 

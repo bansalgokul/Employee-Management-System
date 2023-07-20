@@ -29,7 +29,7 @@ const ViewProject = ({
 		async function getData() {
 			try {
 				const projectResponse = await api.get(
-					`/admin/project/${project._id}`,
+					`/admin/project/?id=${project._id}`,
 				);
 				if (projectResponse.status === 200) {
 					// eslint-disable-next-line react-hooks/exhaustive-deps
@@ -40,7 +40,8 @@ const ViewProject = ({
 				if (taskResponse.status === 200) {
 					taskResponse.data.taskDocs =
 						taskResponse.data.taskDocs.filter(
-							(task: Task) => task.user !== null,
+							(task: Task) =>
+								task.user !== null && task.project !== null,
 						);
 					setTaskList(taskResponse.data.taskDocs);
 				}
@@ -130,7 +131,7 @@ const ViewProject = ({
 								</div>
 								<div>
 									Total Work:{" "}
-									{`${getTotalWork().hours.toString()} hr`}
+									{`${getTotalWork().hours.toString()} hr ${getTotalWork().mins.toString()} mins`}
 								</div>
 							</div>
 

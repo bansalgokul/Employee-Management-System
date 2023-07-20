@@ -1,16 +1,17 @@
 import { useState } from "react";
 import api from "../../../../api/api";
 import { GrClose } from "react-icons/gr";
-import { User } from "../../../types";
 import Button from "../../../Shared/Button";
+import { User } from "../../../types";
 
 type Props = {
+	setIsNewUserOpen: React.Dispatch<React.SetStateAction<boolean>>;
+
 	userList: User[];
 	setUserList: React.Dispatch<React.SetStateAction<User[]>>;
-	setIsNewUserOpen: React.Dispatch<React.SetStateAction<boolean>>;
 };
 
-const AddUser = ({ userList, setUserList, setIsNewUserOpen }: Props) => {
+const AddUser = ({ setIsNewUserOpen, userList, setUserList }: Props) => {
 	const [name, setName] = useState("");
 	const [email, setEmail] = useState("");
 	const [password, setPassword] = useState("");
@@ -32,7 +33,7 @@ const AddUser = ({ userList, setUserList, setIsNewUserOpen }: Props) => {
 			roles,
 		};
 
-		const response = await api.post("/register", newUser);
+		const response = await api.post("/admin/user", newUser);
 		if (response.status === 201) {
 			setUserList([...userList, response.data.userDoc]);
 		}

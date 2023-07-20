@@ -7,7 +7,7 @@ const verifyJWT = async (req, res, next) => {
 	const authHeader = req.headers.authorization || req.headers.Authorization;
 
 	if (!authHeader?.startsWith("Bearer ")) {
-		return res.status(400).json({ error: "Invalid access token" });
+		return res.status(401).json({ error: "Invalid access token" });
 	}
 
 	const token = authHeader.split(" ")[1];
@@ -17,12 +17,12 @@ const verifyJWT = async (req, res, next) => {
 		console.log(decoded);
 		const userDoc = await User.findById(decoded.user?._id);
 		if (!userDoc) {
-			return res.status(400).json({ error: "User not found" });
+			return res.status(401).json({ error: "User not found" });
 		}
 		req.user = decoded.user;
 		next();
 	} catch (err) {
-		return res.status(400).json({ error: "Invalid token" });
+		return res.status(401).json({ error: "Invalid token" });
 	}
 };
 

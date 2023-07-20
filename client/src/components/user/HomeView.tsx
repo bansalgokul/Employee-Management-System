@@ -18,16 +18,15 @@ const HomeView = ({
 	return (
 		<div className='w-full h-full bg-white rounded-lg flex flex-col'>
 			<HomeViewTimer
-				setTaskList={setTaskList}
 				taskList={taskList}
+				setTaskList={setTaskList}
 				projectList={projectList}
-				setProjectList={setProjectList}
 			/>
 
 			<div className='h-[90%]'>
 				<TaskView
-					setTaskList={setTaskList}
 					taskList={taskList}
+					setTaskList={setTaskList}
 					projectList={projectList}
 					setProjectList={setProjectList}
 				/>

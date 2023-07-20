@@ -31,6 +31,7 @@ const Login = ({ setUserInfo, setIsLoggedIn }: Props) => {
 			);
 
 			if (response.status === 200) {
+				// Setting access token
 				api.defaults.headers.common.Authorization = `Bearer ${response.data.accessToken}`;
 				setUserInfo(response.data.userDoc);
 				setIsLoggedIn(true);
@@ -85,6 +86,7 @@ const Login = ({ setUserInfo, setIsLoggedIn }: Props) => {
 							required
 						/>
 
+						{/* Error display is not complete but functioning for this component */}
 						{error && <ErrorDisplay error={error} />}
 						<Button name='Login' type='submit' form='loginForm' />
 					</form>

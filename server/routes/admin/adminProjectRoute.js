@@ -10,10 +10,10 @@ import {
 
 router
 	.route("/")
-	.get(getAllProjectAdmin)
+	.get(getProjectAdmin)
 	.post(addProjectAdmin)
 	.put(editProjectAdmin);
 
-router.route("/:id").get(getProjectAdmin).delete(deleteProjectAdmin);
+router.route("/:id").delete(deleteProjectAdmin);
 
 export default router;

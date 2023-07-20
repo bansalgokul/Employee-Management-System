@@ -9,22 +9,25 @@ import Button from "../../../Shared/Button";
 
 type Props = {
 	project: Project | undefined;
-	projectList: Project[];
-	setProjectList: React.Dispatch<React.SetStateAction<Project[]>>;
+
 	setIsEditorOpen: React.Dispatch<
 		React.SetStateAction<Project | null | undefined>
 	>;
+	projectList: Project[];
+	setProjectList: React.Dispatch<React.SetStateAction<Project[]>>;
 	userList: User[];
 	setUserList: React.Dispatch<React.SetStateAction<User[]>>;
+	setIsChange: React.Dispatch<React.SetStateAction<boolean>>;
 };
 
 const EditProject = ({
-	projectList,
-	setProjectList,
 	setIsEditorOpen,
 	project,
+	projectList,
+	setProjectList,
 	userList,
 	setUserList,
+	setIsChange,
 }: Props) => {
 	const [description, setDescription] = useState("");
 	const [title, setTitle] = useState("");
@@ -45,12 +48,17 @@ const EditProject = ({
 			try {
 				if (project) {
 					const projectResponse = await api.get(
-						`/admin/project/${project._id}`,
+						`/admin/project/?id=${project._id}`,
 					);
 					if (projectResponse.status === 200) {
 						// eslint-disable-next-line react-hooks/exhaustive-deps
 						project = projectResponse.data.projectDoc;
+
 						if (project) {
+							project.assigned = project.assigned.filter((u) => {
+								return u.user !== null;
+							});
+
 							setTitle(project.title);
 							setDescription(project.description);
 							setAssigned(project.assigned);
@@ -95,6 +103,7 @@ const EditProject = ({
 			const response = await api.post("/admin/project", newProject);
 			if (response.status === 201) {
 				setProjectList([...projectList, response.data.projectDoc]);
+				setIsChange((prev) => !prev);
 			}
 		} else {
 			const editedProject = {
@@ -107,6 +116,7 @@ const EditProject = ({
 
 			const response = await api.put("/admin/project", editedProject);
 			if (response.status === 200) {
+				setIsChange((prev) => !prev);
 				setProjectList(
 					projectList.map((p) => {
 						if (p._id !== project?._id) {
@@ -141,10 +151,15 @@ const EditProject = ({
 				<Loading />
 			) : (
 				<div
-					onClick={(e) => e.stopPropagation()}
+					onClick={(e) => {
+						e.stopPropagation();
+						setIsUserDropdownOpen(false);
+					}}
 					className='border-2 p-4 rounded-md bg-white w-[470px] h-[400px] flex flex-col justify-between'>
 					<div className=' flex text-xl font-semibold justify-between  items-center'>
-						<div className='px-3 pb-2'>EDIT PROJECT</div>
+						<div className='px-3 pb-2'>
+							{project ? "EDIT PROJECT" : "ADD PROJECT"}
+						</div>
 						<div
 							onClick={handleCancel}
 							className='hover:cursor-pointer px-3 pb-2'>
@@ -195,7 +210,9 @@ const EditProject = ({
 									Assigned:{" "}
 								</label>
 
-								<div className='px-3 py-2 bg-[#f5f5f5]	w-[300px] rounded-xl relative'>
+								<div
+									className='px-3 py-2 bg-[#f5f5f5]	w-[300px] rounded-xl relative'
+									onClick={(e) => e.stopPropagation()}>
 									<div
 										onClick={() =>
 											setIsUserDropdownOpen(
@@ -213,7 +230,7 @@ const EditProject = ({
 										</div>
 									</div>
 									{isUserDropdownOpen && (
-										<div className='absolute  bg-[#f5f5f5] rounded-b-md w-full left-0 px-3 py-1'>
+										<div className='absolute z-10 bg-[#f5f5f5] rounded-b-md w-full left-0 px-3 py-1'>
 											<div>
 												<input
 													type='text'
@@ -227,7 +244,7 @@ const EditProject = ({
 													className='px-3 py-1 bg-[#fafafa] mb-1 text-black border-2 rounded-lg'
 												/>
 											</div>
-											<div>
+											<div className='overflow-auto  h-[200px]'>
 												{userList
 													.filter((user) =>
 														user.name
@@ -253,8 +270,8 @@ const EditProject = ({
 																	{assigned.find(
 																		(u) =>
 																			u
-																				.user
-																				._id ===
+																				?.user
+																				?._id ===
 																			user._id,
 																	) ? (
 																		<BiCheckboxChecked />
@@ -279,6 +296,7 @@ const EditProject = ({
 
 								<button
 									className='px-3 py-2 text-4xl font-light text-[#3B71CA]	w-[300px] rounded-xl'
+									type='button'
 									onClick={() =>
 										setCompleted((prev) => !prev)
 									}>

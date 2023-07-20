@@ -5,13 +5,13 @@ import { User } from "../../../types";
 import Button from "../../../Shared/Button";
 
 type Props = {
-	userList: User[];
-	setUserList: React.Dispatch<React.SetStateAction<User[]>>;
 	user: User;
 	setIsEditorOpen: React.Dispatch<React.SetStateAction<User | null>>;
+	userList: User[];
+	setUserList: React.Dispatch<React.SetStateAction<User[]>>;
 };
 
-const EditUser = ({ userList, setUserList, user, setIsEditorOpen }: Props) => {
+const EditUser = ({ user, setIsEditorOpen, userList, setUserList }: Props) => {
 	const [name, setName] = useState(user.name);
 	const [email, setEmail] = useState(user.email);
 	// const [password, setPassword] = useState();

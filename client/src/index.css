@@ -17,12 +17,9 @@ html {
 	font-family: "Calistoga", sans-serif;
 }
 
-.no-scrollbar::-webkit-scrollbar {
-	display: none;
+.scrollbar::-webkit-scrollbar {
+	width: 15px;
 }
-
-/* Hide scrollbar for IE, Edge and Firefox */
-.no-scrollbar {
-	-ms-overflow-style: none; /* IE and Edge */
-	scrollbar-width: none; /* Firefox */
+.scrollbar::-webkit-scrollbar-thumb {
+	background: #f0f0f0;
 }

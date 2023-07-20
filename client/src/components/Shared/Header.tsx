@@ -15,9 +15,10 @@ type Props = {
 };
 
 const Header = ({ isLoggedIn, userInfo, setIsLoggedIn }: Props) => {
-	const [isDropDownOpen, setIsDropDownOpen] = useState<string | null>(null);
+	const [dropdown, setDropdown] = useState(false);
 	const navigate = useNavigate();
 
+	// Logout handling
 	const handleLogout = async () => {
 		await api.get("/auth/logout", {
 			withCredentials: true,
@@ -27,6 +28,7 @@ const Header = ({ isLoggedIn, userInfo, setIsLoggedIn }: Props) => {
 		navigate("/login");
 	};
 
+	// Action items for header dropdown
 	const navigateActionItems = [
 		{
 			name: "Profile",
@@ -40,6 +42,7 @@ const Header = ({ isLoggedIn, userInfo, setIsLoggedIn }: Props) => {
 		},
 	];
 
+	// Created outside dropdown component to selectively add admin option
 	if (userInfo?.roles === "admin") {
 		navigateActionItems.push({
 			name: "Admin",
@@ -70,19 +73,15 @@ const Header = ({ isLoggedIn, userInfo, setIsLoggedIn }: Props) => {
 							</li>
 							<li
 								className='relative'
-								onClick={() =>
-									setIsDropDownOpen((prev) =>
-										prev ? null : "open",
-									)
-								}>
+								onClick={() => setDropdown((prev) => !prev)}>
 								<img
 									src={Profile}
 									alt=''
 									className='rounded-full w-10 h-10 p-1'
 								/>
-								{isDropDownOpen && (
+								{dropdown && (
 									<ActionDropdown
-										setIsDropdownOpen={setIsDropDownOpen}
+										setDropdown={setDropdown}
 										navigateActionItems={
 											navigateActionItems
 										}
