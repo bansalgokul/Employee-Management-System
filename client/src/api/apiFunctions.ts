@@ -9,7 +9,7 @@ const getUserTasks = async (
 		response.data.taskDocs =
 			// filter the tasks where user or project is deleted
 			response.data.taskDocs.filter(
-				(task: Task) => task.user !== null && task.project !== null,
+				(task: Task) => task.user && task.project,
 			);
 		setTaskList(response.data.taskDocs);
 	}

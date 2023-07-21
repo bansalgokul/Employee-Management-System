@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import api from "../../../api/api";
 import { format } from "date-fns";
 import { Task, Project } from "../../types";
@@ -7,45 +7,28 @@ import Button from "../../Shared/Button";
 import { GrClose } from "react-icons/gr";
 
 type Props = {
-	task: Task;
-	setIsEditorOpen: React.Dispatch<React.SetStateAction<Task | null>>;
-	taskList: Task[];
-	setTaskList: React.Dispatch<React.SetStateAction<Task[]>>;
-	projectList: Project[];
-	setProjectList: React.Dispatch<React.SetStateAction<Project[]>>;
+	task: string;
 	isAdminView: boolean;
+	setIsEditorOpen: React.Dispatch<React.SetStateAction<string | null>>;
+	setIsChanged: React.Dispatch<React.SetStateAction<boolean>>;
 };
 
 const EditTask = ({
 	task,
-	setIsEditorOpen,
-	taskList,
-	setTaskList,
-	projectList,
-	setProjectList,
 	isAdminView,
+	setIsEditorOpen,
+	setIsChanged,
 }: Props) => {
-	const [description, setDescription] = useState(task.description);
-	const [project, setProject] = useState(task.project._id);
-	const [date, setDate] = useState(
-		format(new Date(task.startedAt), "yyyy-MM-dd"),
-	);
-	const [startedAt, setStartedAt] = useState(new Date(task.startedAt));
-	const [shours, setSHours] = useState(
-		startedAt.getHours().toString().padStart(2, "0"),
-	);
-	const [sminutes, setSMinutes] = useState(
-		startedAt.getMinutes().toString().padStart(2, "0"),
-	);
-	const [endedAt, setEndedAt] = useState(new Date(task.endedAt));
-	const [ehours, setEHours] = useState(
-		endedAt.getHours().toString().padStart(2, "0"),
-	);
-	const [eminutes, setEMinutes] = useState(
-		endedAt.getMinutes().toString().padStart(2, "0"),
-	);
+	const [editTask, setEditTask] = useState<Task>();
+	const [description, setDescription] = useState("");
+	const [project, setProject] = useState("");
+	const [date, setDate] = useState(format(new Date(), "yyyy-MM-dd"));
+	const [startedAt, setStartedAt] = useState(new Date());
+	const [startTime, setStartTime] = useState("00:00");
+	const [endedAt, setEndedAt] = useState(new Date());
+	const [endTime, setEndTime] = useState("00:00");
+	const [projectList, setProjectList] = useState<Project[]>([]);
 
-	const ref = useRef<HTMLDivElement>(null);
 	const [loading, setLoading] = useState(true);
 
 	useEffect(() => {
@@ -53,10 +36,42 @@ const EditTask = ({
 
 		async function getData() {
 			try {
-				const projectUrl = isAdminView ? "/admin/project" : "/project";
-				// const taskUrl = isAdminView ? "/admin/task" : "/task";
-				const projectResponse = await api.get(projectUrl);
+				if (task) {
+					// const taskUrl = isAdminView ? "/admin/task" : "/task";
+					const taskReponse = await api.get(
+						`/admin/task/?target=${task}`,
+					);
+					const taskDoc = taskReponse.data.taskDocs[0];
+					setEditTask(taskDoc);
+					setDescription(taskDoc.description);
+					setProject(taskDoc.project._id);
+					const startDate = new Date(taskDoc.startedAt);
+					const endDate = new Date(taskDoc.endedAt);
+					setDate(format(startDate, "yyyy-MM-dd"));
+					setStartedAt(startDate);
+					setEndedAt(endDate);
+					setStartTime(
+						`${startDate
+							.getHours()
+							.toString()
+							.padStart(2, "0")}:${startDate
+							.getMinutes()
+							.toString()
+							.padStart(2, "0")}`,
+					);
+					setEndTime(
+						`${endDate
+							.getHours()
+							.toString()
+							.padStart(2, "0")}:${endDate
+							.getMinutes()
+							.toString()
+							.padStart(2, "0")}`,
+					);
+				}
 
+				const projectUrl = isAdminView ? "/admin/project" : "/project";
+				const projectResponse = await api.get(projectUrl);
 				if (projectResponse.status === 200) {
 					projectResponse.data.projectDocs.forEach(
 						(project: Project) =>
@@ -66,10 +81,10 @@ const EditTask = ({
 					);
 					setProjectList(projectResponse.data.projectDocs);
 				}
-
-				setLoading(false);
 			} catch (error) {
 				console.log("Error fetching Projects:", error);
+			} finally {
+				setLoading(false);
 			}
 		}
 
@@ -79,27 +94,33 @@ const EditTask = ({
 
 	useEffect(() => {
 		const timeSet = new Date(
-			new Date(date).setHours(parseInt(shours), parseInt(sminutes)),
+			new Date(date).setHours(
+				parseInt(startTime.slice(0, 2)),
+				parseInt(startTime.slice(3, 5)),
+			),
 		);
-
 		setStartedAt(timeSet);
-	}, [shours, sminutes, date]);
+	}, [startTime, date]);
 
 	useEffect(() => {
 		const timeSet = new Date(
-			new Date(date).setHours(parseInt(ehours), parseInt(eminutes)),
+			new Date(date).setHours(
+				parseInt(endTime.slice(0, 2)),
+				parseInt(endTime.slice(3, 5)),
+			),
 		);
-
 		setEndedAt(timeSet);
-	}, [ehours, eminutes, date]);
+	}, [endTime, date]);
 
-	const handleSave = async () => {
+	const handleSave = async (e: React.FormEvent<HTMLFormElement>) => {
+		e.preventDefault();
+
 		if (description.length === 0) {
 			return alert("description cannot be empty");
 		}
 
 		const editedTask = {
-			_id: task._id,
+			_id: task,
 			description,
 			project,
 			startedAt,
@@ -107,19 +128,11 @@ const EditTask = ({
 		};
 
 		const url = isAdminView ? "/admin/task" : "/task";
-		const response = await api.put(url, editedTask);
-		if (response.status === 200) {
-			setTaskList(
-				taskList.map((t) => {
-					if (t._id !== task._id) {
-						return t;
-					}
-					return response.data.taskDoc;
-				}),
-			);
-			setDescription("");
-		}
+		await api.put(url, editedTask);
 
+		setDescription("");
+
+		setIsChanged((prev) => !prev);
 		setIsEditorOpen(null);
 	};
 
@@ -153,7 +166,7 @@ const EditTask = ({
 						<form
 							id='editTaskForm'
 							className='w-full flex flex-col gap-2 relative'
-							onSubmit={(e) => handleSave()}>
+							onSubmit={(e) => handleSave(e)}>
 							<div className='flex items-center'>
 								<label
 									htmlFor='description'
@@ -189,7 +202,7 @@ const EditTask = ({
 											p.assigned.find(
 												(user) =>
 													user.user._id ===
-													task.user._id,
+													editTask?.user._id,
 											),
 										)
 										.map((p) => {
@@ -216,7 +229,7 @@ const EditTask = ({
 											name='user'
 											id='user'
 											className='px-3 py-2 bg-[#f5f5f5]	w-[300px] rounded-xl'
-											value={task.user.name}
+											value={editTask?.user.name}
 											disabled></input>
 									</div>
 									<div className='flex items-center'>
@@ -261,21 +274,19 @@ const EditTask = ({
 									name='startTime'
 									id='startTime'
 									className='px-3 py-2 bg-[#f5f5f5]	w-[300px] rounded-xl'
-									value={`${shours}:${sminutes}`}
+									value={startTime}
 									onChange={(e) => {
 										if (
 											(!isAdminView &&
 												e.target.value >
 													e.target.max) ||
-											e.target.value >
-												`${ehours}:${eminutes}`
+											e.target.value > endTime
 										) {
 											return alert(
 												"cannot set future time",
 											);
 										}
-										setSHours(e.target.value.slice(0, 2));
-										setSMinutes(e.target.value.slice(3, 5));
+										setStartTime(e.target.value);
 									}}
 									max={
 										!isAdminView
@@ -295,19 +306,17 @@ const EditTask = ({
 									name='endTime'
 									id='endTime'
 									className='px-3 py-2 bg-[#f5f5f5]	w-[300px] rounded-xl'
-									value={`${ehours}:${eminutes}`}
+									value={endTime}
 									onChange={(e) => {
 										if (
 											(!isAdminView &&
 												e.target.value >
 													e.target.max) ||
-											e.target.value <
-												`${shours}:${sminutes}`
+											e.target.value < startTime
 										) {
 											return alert("Invalid Time");
 										}
-										setEHours(e.target.value.slice(0, 2));
-										setEMinutes(e.target.value.slice(3, 5));
+										setEndTime(e.target.value);
 									}}
 									max={
 										!isAdminView

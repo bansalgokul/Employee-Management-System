@@ -1,5 +1,5 @@
-import { Task } from "../../types";
-import { getTasksTime } from "../duration";
+import { Task } from "../../../types";
+import { getTasksTime } from "../../../Shared/duration";
 import { useMemo } from "react";
 import TaskBox from "./TaskBox";
 

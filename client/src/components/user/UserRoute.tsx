@@ -64,8 +64,6 @@ const UserRoute = ({ isLoggedIn, userInfo }: Props) => {
 								<TaskView
 									taskList={taskList}
 									setTaskList={setTaskList}
-									projectList={projectList}
-									setProjectList={setProjectList}
 								/>
 							}
 						/>

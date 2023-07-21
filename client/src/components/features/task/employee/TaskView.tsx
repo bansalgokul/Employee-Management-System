@@ -4,9 +4,9 @@ import { useEffect, useState } from "react";
 import api from "../../../../api/api";
 import { format } from "date-fns";
 import EditTask from "../EditTask";
-import { Project, Task } from "../../../types";
+import { Task } from "../../../types";
 import Loading from "../../../Shared/Loading";
-import DateBox from "../../../Shared/Tasks/DateBox";
+import DateBox from "./DateBox";
 import { getUserTasks } from "../../../../api/apiFunctions";
 
 type GroupedTasksDate = {
@@ -17,17 +17,10 @@ type GroupedTasksDate = {
 type Props = {
 	taskList: Task[];
 	setTaskList: React.Dispatch<React.SetStateAction<Task[]>>;
-	projectList: Project[];
-	setProjectList: React.Dispatch<React.SetStateAction<Project[]>>;
 };
 
-const TaskView = ({
-	taskList,
-	setTaskList,
-	projectList,
-	setProjectList,
-}: Props) => {
-	const [isEditorOpen, setIsEditorOpen] = useState<Task | null>(null);
+const TaskView = ({ taskList, setTaskList }: Props) => {
+	const [isEditorOpen, setIsEditorOpen] = useState<string | null>(null);
 	const [loading, setLoading] = useState(true);
 
 	useEffect(() => {
@@ -35,6 +28,7 @@ const TaskView = ({
 
 		async function getData() {
 			await getUserTasks(setTaskList);
+			setLoading(false);
 		}
 
 		getData();
@@ -43,7 +37,7 @@ const TaskView = ({
 	const handleEditClick = (id: string) => {
 		const task = taskList.find((task) => task._id === id);
 		if (task) {
-			setIsEditorOpen(task);
+			setIsEditorOpen(task._id);
 		}
 	};
 	const handleDeleteClick = async (id: string) => {
@@ -89,10 +83,6 @@ const TaskView = ({
 						<EditTask
 							task={isEditorOpen}
 							setIsEditorOpen={setIsEditorOpen}
-							projectList={projectList}
-							taskList={taskList}
-							setTaskList={setTaskList}
-							setProjectList={setProjectList}
 							isAdminView={false}
 						/>
 					)}

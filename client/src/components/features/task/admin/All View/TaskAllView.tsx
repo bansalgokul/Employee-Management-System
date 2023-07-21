@@ -1,18 +1,19 @@
 import { useEffect, useState } from "react";
 import AllTaskBox from "./AllTaskBox";
-import { Task } from "../../../types";
-import api from "../../../../api/api";
-import Loading from "../../../Shared/Loading";
-import Pagination from "../../../Shared/Paginate";
-import DateFilter from "../../../Shared/DateFilter";
+import { Task } from "../../../../types";
+import api from "../../../../../api/api";
+import Loading from "../../../../Shared/Loading";
+import Pagination from "../../../../Shared/Paginate";
+import DateFilter from "../../../../Shared/DateFilter";
+import EditTask from "../../EditTask";
 
 type Props = {
 	search: string;
-	handleDeleteClick: (id: string) => void;
-	handleEditClick: (id: string) => void;
+	// handleDeleteClick: (id: string) => void;
+	// handleEditClick: (id: string) => void;
 };
 
-const TaskAllView = ({ search, handleDeleteClick, handleEditClick }: Props) => {
+const TaskAllView = ({ search }: Props) => {
 	const [tasks, setTasks] = useState<Task[]>([]);
 	const [loading, setLoading] = useState(true);
 	const [currentPage, setCurrentPage] = useState(1);
@@ -21,6 +22,9 @@ const TaskAllView = ({ search, handleDeleteClick, handleEditClick }: Props) => {
 
 	const [fromDate, setFromDate] = useState<string>("");
 	const [toDate, setToDate] = useState<string>("");
+
+	const [isChanged, setIsChanged] = useState(false);
+	const [isEditorOpen, setIsEditorOpen] = useState<string | null>(null);
 
 	const onPageChange = (pageNumber: number) => {
 		setCurrentPage(pageNumber);
@@ -33,6 +37,15 @@ const TaskAllView = ({ search, handleDeleteClick, handleEditClick }: Props) => {
 	useEffect(() => {
 		setCurrentPage(1);
 	}, [limit, search, fromDate, toDate]);
+
+	const handleEditClick = (id: string) => {
+		setIsEditorOpen(id);
+	};
+	const handleDeleteClick = async (id: string) => {
+		const url = `admin/task/${id}`;
+		await api.delete(url);
+		setIsChanged((prev) => !prev);
+	};
 
 	useEffect(() => {
 		setLoading(true);
@@ -54,7 +67,7 @@ const TaskAllView = ({ search, handleDeleteClick, handleEditClick }: Props) => {
 			}
 		};
 		getTasks();
-	}, [search, currentPage, limit, fromDate, toDate]);
+	}, [search, currentPage, limit, fromDate, toDate, isChanged]);
 
 	return (
 		<>
@@ -62,6 +75,16 @@ const TaskAllView = ({ search, handleDeleteClick, handleEditClick }: Props) => {
 				<Loading />
 			) : (
 				<div>
+					<>
+						{isEditorOpen && (
+							<EditTask
+								setIsChanged={setIsChanged}
+								task={isEditorOpen}
+								setIsEditorOpen={setIsEditorOpen}
+								isAdminView={true}
+							/>
+						)}
+					</>
 					<DateFilter
 						fromDate={fromDate}
 						toDate={toDate}

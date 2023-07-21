@@ -2,6 +2,7 @@ import Project from "../../models/Project.js";
 import User from "../../models/User.js";
 import Joi from "joi";
 import Task from "../../models/Task.js";
+import mongoose from "mongoose";
 
 const addTaskAdmin = async (req, res) => {
 	try {
@@ -133,121 +134,156 @@ const getAllTaskAdmin = async (req, res) => {
 	try {
 		let { group, search, target, skip, limit, from, to } = req.query;
 		search = search || "";
-		skip = skip || 0;
+		skip = parseInt(skip) || 0;
 		const fromDate = from
 			? new Date(new Date(from).setHours(0, 0, 0))
 			: new Date(0, 0, 0);
 		const toDate = to ? new Date(to) : new Date();
 
-		const taskDocs = await Task.find({
-			startedAt: {
-				$gte: fromDate,
-				$lte: toDate,
+		const pipeline = [
+			{
+				$lookup: {
+					from: "users",
+					localField: "user",
+					foreignField: "_id",
+					as: "user",
+				},
 			},
-		})
-			.sort({ startedAt: -1 })
-			.populate(["user", "project"]);
+			{
+				$lookup: {
+					from: "projects",
+					localField: "project",
+					foreignField: "_id",
+					as: "project",
+				},
+			},
+			{
+				$unwind: {
+					path: "$user",
+					preserveNullAndEmptyArrays: false,
+				},
+			},
+			{
+				$unwind: {
+					path: "$project",
+					preserveNullAndEmptyArrays: false,
+				},
+			},
+			{
+				$sort: {
+					startedAt: -1,
+					endedAt: -1,
+				},
+			},
+		];
 
-		const filterTasksBySearch = (task) => {
-			const regex = new RegExp(search, "i");
-
-			return (
-				task.user &&
-				task.project &&
-				(group === "project"
-					? task.project.title.match(regex)
-					: group === "user"
-					? task.user.name.match(regex)
-					: task.project.title.match(regex) ||
-					  task.user.name.match(regex) ||
-					  task.description.match(regex))
-			);
-		};
-
-		const filteredTasks = taskDocs.filter(filterTasksBySearch);
-		const totalRecords = filteredTasks.length;
-
-		if (!group) {
-			limit = limit || totalRecords;
-			const skippedTasks = filteredTasks.slice(skip, skip + limit);
-			return res
-				.status(200)
-				.json({ taskDocs: skippedTasks, totalRecords });
-		}
-		if (group === "project") {
-			if (target && target !== "null") {
-				let taskDocs = await Task.find({
-					project: target,
-					startedAt: {
-						$gte: fromDate,
-						$lte: toDate,
+		if (!group || (target && target !== null)) {
+			let filteredTasksPipeline = pipeline.concat([
+				{
+					$match: {
+						$or: [
+							{
+								description: {
+									$regex: search,
+									$options: "i",
+								},
+							},
+							{
+								"user.name": {
+									$regex: search,
+									$options: "i",
+								},
+							},
+							{
+								"project.title": {
+									$regex: search,
+									$options: "i",
+								},
+							},
+						],
+						startedAt: {
+							$gte: fromDate,
+							$lte: toDate,
+						},
 					},
-				})
-					.sort({ startedAt: -1 })
-					.populate(["user", "project"]);
-				let filteredTasks = taskDocs.filter(
-					(task) => task.user && task.project,
-				);
-				limit = limit || filteredTasks.length;
+				},
+			]);
 
-				let skippedTasks = filteredTasks.slice(
-					parseInt(skip),
-					parseInt(skip) + parseInt(limit),
-				);
-
-				return res.status(200).json({
-					taskDocs: skippedTasks,
-					totalRecords: filteredTasks.length,
+			if (!group && target && target !== null) {
+				filteredTasksPipeline.push({
+					$match: {
+						_id: new mongoose.Types.ObjectId(target),
+					},
 				});
 			}
-			const responseArray = [];
-			filteredTasks.forEach((task) => {
-				if (
-					!responseArray.find((item) => item._id === task.project._id)
-				) {
-					responseArray.push(task.project);
-				}
-			});
 
-			return res.status(200).json({
-				responseArray,
-			});
-		}
-		if (group === "user") {
-			if (target && target !== "null") {
-				let taskDocs = await Task.find({
-					user: target,
-					startedAt: {
-						$gte: fromDate,
-						$lte: toDate,
+			if (group === "project") {
+				filteredTasksPipeline.push({
+					$match: {
+						"project._id": new mongoose.Types.ObjectId(target),
 					},
-				})
-					.sort({ startedAt: -1 })
-					.populate(["user", "project"]);
-				let filteredTasks = taskDocs.filter(
-					(task) => task.user && task.project,
-				);
-				limit = limit || filteredTasks.length;
-
-				let skippedTasks = filteredTasks.slice(
-					parseInt(skip),
-					parseInt(skip) + parseInt(limit),
-				);
-
-				return res.status(200).json({
-					taskDocs: skippedTasks,
-					totalRecords: filteredTasks.length,
 				});
 			}
-			const responseArray = [];
-			filteredTasks.forEach((task) => {
-				if (!responseArray.find((item) => item._id === task.user._id)) {
-					responseArray.push(task.user);
-				}
+			if (group === "user") {
+				filteredTasksPipeline.push({
+					$match: {
+						"user._id": new mongoose.Types.ObjectId(target),
+					},
+				});
+			}
+
+			const countTasksPipeline = filteredTasksPipeline.concat({
+				$count: "totalRecords",
 			});
+			const totalRecordsDoc = await Task.aggregate(countTasksPipeline);
+			const totalRecords = totalRecordsDoc?.[0]?.totalRecords || 0;
+			limit = parseInt(limit) || totalRecords;
+			const skippedTasksPipeline = filteredTasksPipeline.concat([
+				{
+					$skip: skip,
+				},
+				{
+					$limit: limit,
+				},
+			]);
+			const taskDocs = await Task.aggregate(skippedTasksPipeline);
 
 			return res.status(200).json({
-				responseArray,
+				taskDocs,
+				totalRecords,
+			});
+		}
+
+		if (group === "project" || group === "user") {
+			let groupPipeline = pipeline.concat({
+				$match:
+					group === "project"
+						? {
+								"project.title": {
+									$regex: search,
+									$options: "i",
+								},
+						  }
+						: {
+								"user.name": {
+									$regex: search,
+									$options: "i",
+								},
+						  },
+			});
+			groupPipeline = groupPipeline.concat({
+				$group: {
+					_id: "",
+					groups: {
+						$addToSet: group === "project" ? "$project" : "$user",
+					},
+				},
+			});
+			const groupDocs = await Task.aggregate(groupPipeline);
+			const groups = groupDocs[0].groups;
+			return res.status(200).json({
+				responseArray: groups,
+				totalRecords: groups.length,
 			});
 		}
 	} catch (err) {

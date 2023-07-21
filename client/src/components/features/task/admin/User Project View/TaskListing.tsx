@@ -1,28 +1,21 @@
 /* eslint-disable no-mixed-spaces-and-tabs */
 import { BsChevronUp, BsChevronDown } from "react-icons/bs";
-import Pagination from "../../../Shared/Paginate";
+import Pagination from "../../../../Shared/Paginate";
 import UserTaskBox from "./UserTaskBox";
-import { Project, Task, User } from "../../../types";
+import { Project, Task, User } from "../../../../types";
 import { useEffect, useState } from "react";
-import api from "../../../../api/api";
+import api from "../../../../../api/api";
 import ProjectTaskBox from "./ProjectTaskBox";
-import DateFilter from "../../../Shared/DateFilter";
+import DateFilter from "../../../../Shared/DateFilter";
+import EditTask from "../../EditTask";
 
 type Props = {
 	user?: User;
 	project?: Project;
-	handleDeleteClick: (id: string) => void;
-	handleEditClick: (id: string) => void;
 	mode: "project" | "user";
 };
 
-const TaskListing = ({
-	user,
-	project,
-	handleDeleteClick,
-	handleEditClick,
-	mode,
-}: Props) => {
+const TaskListing = ({ user, project, mode }: Props) => {
 	const [listOpen, setListOpen] = useState(false);
 	const [taskList, setTaskList] = useState<Task[]>([]);
 	const [currentPage, setCurrentPage] = useState(1);
@@ -33,12 +26,24 @@ const TaskListing = ({
 	const [fromDate, setFromDate] = useState<string>("");
 	const [toDate, setToDate] = useState<string>("");
 
+	const [isChanged, setIsChanged] = useState(false);
+	const [isEditorOpen, setIsEditorOpen] = useState<string | null>(null);
+
 	const onPageChange = (pageNumber: number) => {
 		setCurrentPage(pageNumber);
 	};
 
 	const handleLimitChange = (newLimit: number) => {
 		setLimit(newLimit);
+	};
+
+	const handleEditClick = (id: string) => {
+		setIsEditorOpen(id);
+	};
+	const handleDeleteClick = async (id: string) => {
+		const url = `admin/task/${id}`;
+		await api.delete(url);
+		setIsChanged((prev) => !prev);
 	};
 
 	useEffect(() => {
@@ -78,10 +83,21 @@ const TaskListing = ({
 		listOpen,
 		fromDate,
 		toDate,
+		isChanged,
 	]);
 
 	return (
 		<div>
+			<>
+				{isEditorOpen && (
+					<EditTask
+						setIsChanged={setIsChanged}
+						task={isEditorOpen}
+						setIsEditorOpen={setIsEditorOpen}
+						isAdminView={true}
+					/>
+				)}
+			</>
 			<div
 				className='font-semibold bg-[#f2f2f2] text-lg flex px-8 py-2 border-b-2 items-center justify-between'
 				onClick={() => setListOpen((prev) => !prev)}>

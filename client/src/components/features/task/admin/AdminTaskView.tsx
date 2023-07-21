@@ -1,34 +1,14 @@
 /* eslint-disable no-mixed-spaces-and-tabs */
 /* eslint-disable react-hooks/exhaustive-deps */
 import { useState } from "react";
-import api from "../../../../api/api";
-
-import EditTask from "../EditTask";
 import { Link, useLocation } from "react-router-dom";
-import { Project, Task } from "../../../types";
-
 import { BiDownArrow } from "react-icons/bi";
-
 import { useDebounce } from "../../../debounce";
-import TaskAllView from "./TaskAllView";
-import TaskUserProjectView from "./TaskUserProjectView";
-import DateFilter from "../../../Shared/DateFilter";
+import TaskAllView from "./All View/TaskAllView";
+import TaskUserProjectView from "./User Project View/TaskUserProjectView";
 
-type Props = {
-	taskList: Task[];
-	setTaskList: React.Dispatch<React.SetStateAction<Task[]>>;
-	projectList: Project[];
-	setProjectList: React.Dispatch<React.SetStateAction<Project[]>>;
-};
-
-const AdminTaskView = ({
-	taskList,
-	setTaskList,
-	projectList,
-	setProjectList,
-}: Props) => {
+const AdminTaskView = () => {
 	const location = useLocation();
-	const [isEditorOpen, setIsEditorOpen] = useState<Task | null>(null);
 
 	const projectID = new URLSearchParams(location.search).get("ref");
 
@@ -37,34 +17,9 @@ const AdminTaskView = ({
 	const [search, setSearch] = useState("");
 	const debouncedSearch = useDebounce(search, 500);
 
-	const handleEditClick = (id: string) => {
-		const task = taskList.find((task) => task._id === id);
-		if (task) {
-			setIsEditorOpen(task);
-		}
-	};
-	const handleDeleteClick = async (id: string) => {
-		const url = `admin/task/${id}`;
-		const response = await api.delete(url);
-		if (response.status === 200) {
-			setTaskList(taskList.filter((task) => task._id !== id));
-		}
-	};
-
 	return (
 		<div className='flex justify-center h-full px-4 w-full flex-grow relative bg-white shadow-lg rounded-md pb-4 pt-2'>
 			<div className='flex flex-col gap-2 w-full h-full '>
-				{isEditorOpen && (
-					<EditTask
-						task={isEditorOpen}
-						setIsEditorOpen={setIsEditorOpen}
-						projectList={projectList}
-						setProjectList={setProjectList}
-						taskList={taskList}
-						setTaskList={setTaskList}
-						isAdminView={true}
-					/>
-				)}
 				{projectID && (
 					<Link to={`project/?target=${projectID}`}>Back</Link>
 				)}
@@ -114,20 +69,12 @@ const AdminTaskView = ({
 					</div>
 				</div>
 				<div>
-					{mode === "All" && (
-						<TaskAllView
-							search={debouncedSearch}
-							handleDeleteClick={handleDeleteClick}
-							handleEditClick={handleEditClick}
-						/>
-					)}
+					{mode === "All" && <TaskAllView search={debouncedSearch} />}
 					{/* Project Mode */}
 					{(mode === "Project" || mode === "User") && (
 						<TaskUserProjectView
 							mode={mode === "Project" ? "project" : "user"}
 							search={debouncedSearch}
-							handleDeleteClick={handleDeleteClick}
-							handleEditClick={handleEditClick}
 						/>
 					)}
 				</div>

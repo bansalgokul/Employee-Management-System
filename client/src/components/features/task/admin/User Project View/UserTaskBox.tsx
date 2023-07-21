@@ -1,8 +1,8 @@
 import { format } from "date-fns";
-import { Task } from "../../../types";
-import ActionDropdown from "../../../Shared/ActionDropdown";
+import { Task } from "../../../../types";
+import ActionDropdown from "../../../../Shared/ActionDropdown";
 import { BsThreeDotsVertical } from "react-icons/bs";
-import { getDuration } from "../../../Shared/duration";
+import { getDuration } from "../../../../Shared/duration";
 import { useMemo, useState } from "react";
 type Props = {
 	task: Task;

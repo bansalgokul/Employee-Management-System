@@ -1,8 +1,8 @@
 import { format } from "date-fns";
-import { Task } from "../../../types";
-import ActionDropdown from "../../../Shared/ActionDropdown";
+import { Task } from "../../../../types";
+import ActionDropdown from "../../../../Shared/ActionDropdown";
 import { BsThreeDotsVertical } from "react-icons/bs";
-import { getDuration } from "../../../Shared/duration";
+import { getDuration } from "../../../../Shared/duration";
 import { useMemo, useState } from "react";
 type Props = {
 	task: Task;
@@ -10,11 +10,7 @@ type Props = {
 	handleDeleteClick: (id: string) => void;
 };
 
-const ProjectTaskBox = ({
-	task,
-	handleEditClick,
-	handleDeleteClick,
-}: Props) => {
+const AllTaskBox = ({ task, handleEditClick, handleDeleteClick }: Props) => {
 	const duration = useMemo(
 		() => getDuration(task.startedAt, task.endedAt).formatTimeHM,
 		[task.startedAt, task.endedAt],
@@ -26,21 +22,24 @@ const ProjectTaskBox = ({
 			<div className='w-[15%] text-center overflow-hidden'>
 				{task.user.name}
 			</div>
-			<div className='w-[20%] text-center overflow-hidden'>
+			<div className='w-[15%] text-center overflow-hidden'>
+				{task.project.title}
+			</div>
+			<div className='w-[15%] text-center overflow-hidden'>
 				{task.description}
 			</div>
-			<div className='w-[20%] text-center'>
+			<div className='w-[15%] text-center'>
 				{format(new Date(task.startedAt), "dd-MM-yyyy")}
 			</div>
-			<div className='w-[15%] text-center'>
-				{format(new Date(task.endedAt), "HH:mm aaa")}
+			<div className='w-[12%] text-center'>
+				{format(new Date(task.startedAt), "HH:mm aaa")}
 			</div>
-			<div className='w-[15%] text-center'>
+			<div className='w-[12%] text-center'>
 				{format(new Date(task.endedAt), "HH:mm aaa")}
 			</div>
 			<div className='w-[10%] text-center'>{duration}</div>
 			<div
-				className='w-[5%] text-center flex justify-center items-center relative hover:cursor-pointer'
+				className='w-[6%] text-center flex justify-center items-center relative hover:cursor-pointer'
 				onClick={() => {
 					setDropdown((prev) => !prev);
 				}}>
@@ -67,4 +66,4 @@ const ProjectTaskBox = ({
 	);
 };
 
-export default ProjectTaskBox;
+export default AllTaskBox;
