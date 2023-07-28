@@ -28,6 +28,12 @@ const projectSchema = new Schema(
 			type: Boolean,
 			default: false,
 		},
+
+		status: {
+			type: String,
+			required: true,
+			enum: ["active", "archived"],
+		},
 	},
 	{ timestamps: true },
 );

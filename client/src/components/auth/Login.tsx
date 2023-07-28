@@ -2,8 +2,8 @@ import { useState } from "react";
 import api from "../../api/api";
 import { useNavigate } from "react-router-dom";
 import { User } from "../types";
-import Button from "./Button";
-import ErrorDisplay from "./ErrorDisplay";
+import Button from "../Shared/Button";
+import ErrorDisplay from "../Shared/ErrorDisplay";
 import { isAxiosError } from "axios";
 
 type Props = {

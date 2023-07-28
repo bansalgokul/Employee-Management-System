@@ -15,24 +15,29 @@ type GroupedTasksDate = {
 }[];
 
 type Props = {
-	taskList: Task[];
-	setTaskList: React.Dispatch<React.SetStateAction<Task[]>>;
+	rerenderTaskView?: boolean;
 };
 
-const TaskView = ({ taskList, setTaskList }: Props) => {
+const TaskView = ({ rerenderTaskView }: Props) => {
+	const [taskList, setTaskList] = useState<Task[]>([]);
 	const [isEditorOpen, setIsEditorOpen] = useState<string | null>(null);
 	const [loading, setLoading] = useState(true);
+	const [isChanged, setIsChanged] = useState(false);
+
+	async function fetchTasks() {
+		try {
+			await getUserTasks(setTaskList);
+		} catch (err) {
+			console.log(err);
+		} finally {
+			setLoading(false);
+		}
+	}
 
 	useEffect(() => {
 		setLoading(true);
-
-		async function getData() {
-			await getUserTasks(setTaskList);
-			setLoading(false);
-		}
-
-		getData();
-	}, []);
+		fetchTasks();
+	}, [rerenderTaskView, isChanged]);
 
 	const handleEditClick = (id: string) => {
 		const task = taskList.find((task) => task._id === id);
@@ -81,6 +86,7 @@ const TaskView = ({ taskList, setTaskList }: Props) => {
 				<div className='flex flex-col gap-2 w-full h-full'>
 					{isEditorOpen && (
 						<EditTask
+							setIsChanged={setIsChanged}
 							task={isEditorOpen}
 							setIsEditorOpen={setIsEditorOpen}
 							isAdminView={false}

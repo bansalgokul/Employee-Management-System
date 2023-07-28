@@ -4,7 +4,6 @@ import {
 	MdOutlineArrowBackIos,
 	MdOutlineArrowForwardIos,
 } from "react-icons/md";
-import { parse } from "date-fns";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const paginate = (currentPage: number, limit = 5, itemArray: any[]) => {
@@ -116,7 +115,7 @@ const Pagination = ({
 		"rounded-full bg-white text-black p-2 w-8 h-8 grid place-content-center";
 
 	return (
-		<div className='flex items-center justify-center gap-2 w-full py-1 border-y relative'>
+		<div className='flex items-center justify-center gap-2 w-full py-2 border-y relative -z-1'>
 			<Button
 				onClick={prevPage}
 				disabled={currentPage === 1}

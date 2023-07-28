@@ -10,8 +10,8 @@ type Props = {
 
 const Sidebar = ({ isAdmin }: Props) => {
 	return (
-		<div className='col-start-1 col-span-1 row-start-2 row-end-11 bg-white shadow-md'>
-			<ul className='flex flex-col h-full  text-base font-medium '>
+		<div className='md:col-start-1 md:col-span-2 lg:col-span-1 md:row-start-2 md:row-end-16 bg-white shadow-md col-start-1 col-end-16 row-start-15 row-end-16'>
+			<ul className='flex md:flex-col h-full  text-base font-medium '>
 				{isAdmin ? (
 					<>
 						<SideBarItem

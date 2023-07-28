@@ -4,11 +4,14 @@ import Joi from "joi";
 import Task from "../../models/Task.js";
 import mongoose from "mongoose";
 
+// for adding a task for a user using admin account
+// Currently not in use
 const addTaskAdmin = async (req, res) => {
 	try {
 		const { description, project, startedAt, user, endedAt } = req.body;
 		4;
 
+		// task validation
 		const schema = Joi.object({
 			description: Joi.string().required(),
 			project: Joi.string().required(),
@@ -58,10 +61,12 @@ const addTaskAdmin = async (req, res) => {
 	}
 };
 
+// to edit user task by admin accountc
 const editTaskAdmin = async (req, res) => {
 	try {
 		const { _id, description, project, startedAt, endedAt } = req.body;
 
+		// validation
 		const schema = Joi.object({
 			_id: Joi.string().required(),
 			description: Joi.string(),
@@ -132,9 +137,11 @@ const deleteTaskAdmin = async (req, res) => {
 
 const getAllTaskAdmin = async (req, res) => {
 	try {
-		let { group, search, target, skip, limit, from, to } = req.query;
+		let { group, search, target, skip, limit, from, to, status } =
+			req.query;
 		search = search || "";
 		skip = parseInt(skip) || 0;
+		status = status || "active";
 		const fromDate = from
 			? new Date(new Date(from).setHours(0, 0, 0))
 			: new Date(0, 0, 0);
@@ -205,6 +212,8 @@ const getAllTaskAdmin = async (req, res) => {
 							$gte: fromDate,
 							$lte: toDate,
 						},
+
+						"project.status": status,
 					},
 				},
 			]);
@@ -236,7 +245,9 @@ const getAllTaskAdmin = async (req, res) => {
 				$count: "totalRecords",
 			});
 			const totalRecordsDoc = await Task.aggregate(countTasksPipeline);
-			const totalRecords = totalRecordsDoc?.[0]?.totalRecords || 0;
+			console.log(totalRecordsDoc);
+			const totalRecords =
+				parseInt(totalRecordsDoc?.[0]?.totalRecords) || 1;
 			limit = parseInt(limit) || totalRecords;
 			const skippedTasksPipeline = filteredTasksPipeline.concat([
 				{
@@ -280,7 +291,7 @@ const getAllTaskAdmin = async (req, res) => {
 				},
 			});
 			const groupDocs = await Task.aggregate(groupPipeline);
-			const groups = groupDocs[0].groups;
+			const groups = groupDocs[0]?.groups || [];
 			return res.status(200).json({
 				responseArray: groups,
 				totalRecords: groups.length,

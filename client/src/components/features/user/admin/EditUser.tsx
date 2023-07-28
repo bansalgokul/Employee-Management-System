@@ -7,11 +7,10 @@ import Button from "../../../Shared/Button";
 type Props = {
 	user: User;
 	setIsEditorOpen: React.Dispatch<React.SetStateAction<User | null>>;
-	userList: User[];
-	setUserList: React.Dispatch<React.SetStateAction<User[]>>;
+	setIsChanged: React.Dispatch<React.SetStateAction<boolean>>;
 };
 
-const EditUser = ({ user, setIsEditorOpen, userList, setUserList }: Props) => {
+const EditUser = ({ user, setIsEditorOpen, setIsChanged }: Props) => {
 	const [name, setName] = useState(user.name);
 	const [email, setEmail] = useState(user.email);
 	// const [password, setPassword] = useState();
@@ -35,14 +34,7 @@ const EditUser = ({ user, setIsEditorOpen, userList, setUserList }: Props) => {
 
 		const response = await api.put("/admin/user", updatedUser);
 		if (response.status === 200) {
-			setUserList(
-				userList.map((u) => {
-					if (u._id === user._id) {
-						return response.data.userDoc;
-					}
-					return u;
-				}),
-			);
+			setIsChanged((prev) => !prev);
 		}
 
 		setIsEditorOpen(null);

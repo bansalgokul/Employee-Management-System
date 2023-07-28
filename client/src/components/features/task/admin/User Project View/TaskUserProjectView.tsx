@@ -6,11 +6,11 @@ import TaskListing from "./TaskListing";
 
 type Props = {
 	search: string;
-
+	status: string;
 	mode: "user" | "project";
 };
 
-const TaskUserProjectView = ({ search, mode }: Props) => {
+const TaskUserProjectView = ({ search, mode, status }: Props) => {
 	const [users, setUsers] = useState<User[]>([]);
 	const [projects, setProjects] = useState<Project[]>([]);
 	const [loading, setLoading] = useState(true);
@@ -36,7 +36,7 @@ const TaskUserProjectView = ({ search, mode }: Props) => {
 			}
 		};
 		getGroupedTasks();
-	}, [search, mode]);
+	}, [search, mode, status]);
 	// }, [search, currentPage, limit]);
 	console.log(users);
 

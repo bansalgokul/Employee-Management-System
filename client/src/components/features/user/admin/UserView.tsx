@@ -6,18 +6,13 @@ import { User } from "../../../types";
 import Loading from "../../../Shared/Loading";
 import Button from "../../../Shared/Button";
 
-import UserBox from "../../../Shared/User/UserBox";
-import { useDebounce } from "../../../debounce";
+import UserBox from "../common/UserBox";
+import { useDebounce } from "../../../Shared/debounce";
 
 import Pagination from "../../../Shared/Paginate";
 
-type Props = {
-	userList: User[];
-	setUserList: React.Dispatch<React.SetStateAction<User[]>>;
-};
-
-const UserView = ({ userList, setUserList }: Props) => {
-	const [displayUserList, setDisplayUserList] = useState<User[]>([]);
+const UserView = () => {
+	const [userList, setUserList] = useState<User[]>([]);
 	const [isNewUserOpen, setIsNewUserOpen] = useState(false);
 	const [isEditorOpen, setIsEditorOpen] = useState<User | null>(null);
 	const [search, setSearch] = useState("");
@@ -25,11 +20,17 @@ const UserView = ({ userList, setUserList }: Props) => {
 	const [loading, setLoading] = useState(true);
 
 	const [currentPage, setCurrentPage] = useState(1);
-	const [limit] = useState(5);
+	const [limit, setLimit] = useState(5);
 	const [totalCount, setTotalCount] = useState(0);
+	const [isChanged, setIsChanged] = useState(false);
+
+	const handleLimitChange = (newLimit: number) => {
+		setLimit(newLimit);
+	};
 
 	const onPageChange = (pageNumber: number) => {
 		setCurrentPage(pageNumber);
+		fetchUsers(debouncedSearch, (pageNumber - 1) * limit, limit);
 	};
 
 	const handleEditClick = (id: string) => {
@@ -52,42 +53,22 @@ const UserView = ({ userList, setUserList }: Props) => {
 		setIsNewUserOpen(true);
 	};
 
-	useEffect(() => {
-		setLoading(true);
-		const handleSearch = async () => {
-			const searchString = debouncedSearch;
-			const userResponse = await api.get(
-				`/admin/user/?search=${searchString}&skip=${
-					(currentPage - 1) * limit
-				}&limit=${limit}`,
-			);
-			if (userResponse.status === 200) {
-				setTotalCount(userResponse.data.totalRecords);
-				setDisplayUserList(userResponse.data.userDocs);
-				setLoading(false);
-			}
-		};
-		handleSearch();
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [limit, currentPage]);
+	const fetchUsers = async (search: string, skip: number, limit: number) => {
+		const userResponse = await api.get(
+			`/admin/user/?search=${search}&skip=${skip}&limit=${limit}`,
+		);
+		if (userResponse.status === 200) {
+			setTotalCount(userResponse.data.totalRecords);
+			setUserList(userResponse.data.userDocs);
+			setLoading(false);
+		}
+	};
 
 	useEffect(() => {
 		setLoading(true);
 		setCurrentPage(1);
-		const handleSearch = async () => {
-			const searchString = debouncedSearch;
-			const userResponse = await api.get(
-				`/admin/user/?search=${searchString}&skip=${0}&limit=${limit}`,
-			);
-			if (userResponse.status === 200) {
-				setTotalCount(userResponse.data.totalRecords);
-				setDisplayUserList(userResponse.data.userDocs);
-				setLoading(false);
-			}
-		};
-		handleSearch();
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [debouncedSearch, userList]);
+		fetchUsers(debouncedSearch, 0, limit);
+	}, [debouncedSearch, isChanged, limit]);
 
 	return (
 		<div className='flex justify-center h-full px-4 w-full relative bg-white shadow-lg rounded-md p-4'>
@@ -109,16 +90,14 @@ const UserView = ({ userList, setUserList }: Props) => {
 					{isNewUserOpen && (
 						<AddUser
 							setIsNewUserOpen={setIsNewUserOpen}
-							userList={userList}
-							setUserList={setUserList}
+							setIsChanged={setIsChanged}
 						/>
 					)}
 					{isEditorOpen && (
 						<EditUser
 							user={isEditorOpen}
 							setIsEditorOpen={setIsEditorOpen}
-							userList={userList}
-							setUserList={setUserList}
+							setIsChanged={setIsChanged}
 						/>
 					)}
 					<div>
@@ -140,7 +119,7 @@ const UserView = ({ userList, setUserList }: Props) => {
 							</div>
 						) : (
 							<>
-								{displayUserList.map((user) => {
+								{userList.map((user) => {
 									return (
 										<UserBox
 											key={user._id}
@@ -161,6 +140,8 @@ const UserView = ({ userList, setUserList }: Props) => {
 							pageSize={limit}
 							totalCount={totalCount}
 							onPageChange={onPageChange}
+							handleLimitChange={handleLimitChange}
+							limitRange={[5, 10, 15]}
 						/>
 					</div>
 				</div>

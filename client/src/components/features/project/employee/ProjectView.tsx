@@ -1,40 +1,26 @@
 import { Project } from "../../../types";
 import { useEffect, useState } from "react";
-import api from "../../../../api/api";
 import Loading from "../../../Shared/Loading";
-import ProjectBox from "../../../Shared/Project/ProjectBox";
+import ProjectBox from "../common/ProjectBox";
+import { getUserProjects } from "../../../../api/apiFunctions";
 
-type Props = {
-	projectList: Project[];
-	setProjectList: React.Dispatch<React.SetStateAction<Project[]>>;
-};
-
-const ProjectView = ({ projectList, setProjectList }: Props) => {
+const ProjectView = () => {
+	const [projectList, setProjectList] = useState<Project[]>([]);
 	const [loading, setLoading] = useState(true);
+
+	const fetchProjects = async () => {
+		try {
+			await getUserProjects(setProjectList);
+		} catch (err) {
+			console.log(err);
+		} finally {
+			setLoading(false);
+		}
+	};
 
 	useEffect(() => {
 		setLoading(true);
-
-		async function getData() {
-			try {
-				const projectResponse = await api.get("/project");
-				if (projectResponse.status === 200) {
-					projectResponse.data.projectDocs.forEach(
-						(project: Project) =>
-							(project.assigned = project.assigned.filter(
-								(p) => p.user?._id,
-							)),
-					);
-					setProjectList(projectResponse.data.projectDocs);
-				}
-
-				setLoading(false);
-			} catch (error) {
-				console.log("Error fetching Projects:", error);
-			}
-		}
-
-		getData();
+		fetchProjects();
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, []);
 

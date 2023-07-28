@@ -9,11 +9,10 @@ import EditTask from "../../EditTask";
 
 type Props = {
 	search: string;
-	// handleDeleteClick: (id: string) => void;
-	// handleEditClick: (id: string) => void;
+	status: string;
 };
 
-const TaskAllView = ({ search }: Props) => {
+const TaskAllView = ({ search, status }: Props) => {
 	const [tasks, setTasks] = useState<Task[]>([]);
 	const [loading, setLoading] = useState(true);
 	const [currentPage, setCurrentPage] = useState(1);
@@ -54,7 +53,7 @@ const TaskAllView = ({ search }: Props) => {
 				const response = await api.get(
 					`/admin/task/?search=${search}&skip=${
 						(currentPage - 1) * limit
-					}&limit=${limit}&from=${fromDate}&to=${toDate}`,
+					}&limit=${limit}&from=${fromDate}&to=${toDate}&status=${status}`,
 				);
 				if (response.status === 200) {
 					setTasks(response.data.taskDocs);
@@ -67,14 +66,14 @@ const TaskAllView = ({ search }: Props) => {
 			}
 		};
 		getTasks();
-	}, [search, currentPage, limit, fromDate, toDate, isChanged]);
+	}, [search, currentPage, limit, fromDate, toDate, isChanged, status]);
 
 	return (
 		<>
 			{loading ? (
 				<Loading />
 			) : (
-				<div>
+				<>
 					<>
 						{isEditorOpen && (
 							<EditTask
@@ -102,7 +101,7 @@ const TaskAllView = ({ search }: Props) => {
 						<div className='w-[10%] text-center'>Duration</div>
 						<div className='w-[6%] text-center'></div>
 					</div>
-					<div className='flex flex-col h-[460px] overflow-auto '>
+					<div className='flex flex-col h-[480px] overflow-auto '>
 						{/* Content */}
 						{tasks.map((task) => {
 							return (
@@ -124,7 +123,7 @@ const TaskAllView = ({ search }: Props) => {
 						handleLimitChange={handleLimitChange}
 						limitRange={[5, 10, 15]}
 					/>
-				</div>
+				</>
 			)}
 		</>
 	);

@@ -52,7 +52,7 @@ const Header = ({ isLoggedIn, userInfo, setIsLoggedIn }: Props) => {
 	}
 
 	return (
-		<div className='col-start-1 col-end-11 row-span-1 row-start-1 flex justify-between items-center px-8 py-3 text-gray-900 bg-white shadow-md relative'>
+		<div className='col-start-1 col-end-16 row-span-1 row-start-1 flex justify-between items-center px-8 py-3 text-gray-900 bg-white shadow-md relative'>
 			<div>
 				<Link to='/'>
 					<h1 className='text-3xl font-bold'>UMS</h1>

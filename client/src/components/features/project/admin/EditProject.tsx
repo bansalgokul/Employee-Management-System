@@ -9,26 +9,11 @@ import Button from "../../../Shared/Button";
 
 type Props = {
 	project: Project | undefined;
-
-	setIsEditorOpen: React.Dispatch<
-		React.SetStateAction<Project | null | undefined>
-	>;
-	projectList: Project[];
-	setProjectList: React.Dispatch<React.SetStateAction<Project[]>>;
-	userList: User[];
-	setUserList: React.Dispatch<React.SetStateAction<User[]>>;
+	setIsEditProject: React.Dispatch<React.SetStateAction<boolean>>;
 	setIsChange: React.Dispatch<React.SetStateAction<boolean>>;
 };
 
-const EditProject = ({
-	setIsEditorOpen,
-	project,
-	projectList,
-	setProjectList,
-	userList,
-	setUserList,
-	setIsChange,
-}: Props) => {
+const EditProject = ({ setIsEditProject, project, setIsChange }: Props) => {
 	const [description, setDescription] = useState("");
 	const [title, setTitle] = useState("");
 	const [assigned, setAssigned] = useState<
@@ -39,7 +24,10 @@ const EditProject = ({
 	const [completed, setCompleted] = useState(false);
 	const [search, setSearch] = useState("");
 	const [isUserDropdownOpen, setIsUserDropdownOpen] = useState(false);
+	const [status, setStatus] = useState("active");
+	const [isStatusDropdownOpen, setIsStatusDropdownOpen] = useState(false);
 	const [loading, setLoading] = useState(false);
+	const [userList, setUserList] = useState<User[]>([]);
 
 	useEffect(() => {
 		setLoading(true);
@@ -98,11 +86,11 @@ const EditProject = ({
 				description,
 				assignees: assigned,
 				completed: completed,
+				status: status,
 			};
 
 			const response = await api.post("/admin/project", newProject);
 			if (response.status === 201) {
-				setProjectList([...projectList, response.data.projectDoc]);
 				setIsChange((prev) => !prev);
 			}
 		} else {
@@ -112,26 +100,19 @@ const EditProject = ({
 				description,
 				assignees: assigned,
 				completed: completed,
+				status: status,
 			};
 
 			const response = await api.put("/admin/project", editedProject);
 			if (response.status === 200) {
 				setIsChange((prev) => !prev);
-				setProjectList(
-					projectList.map((p) => {
-						if (p._id !== project?._id) {
-							return p;
-						}
-						return response.data.projectDoc;
-					}),
-				);
 			}
 		}
-		setIsEditorOpen(null);
+		setIsEditProject(false);
 	};
 
 	const handleCancel = () => {
-		setIsEditorOpen(null);
+		setIsEditProject(false);
 	};
 
 	function handleUserCheck(user: User): void {
@@ -154,8 +135,9 @@ const EditProject = ({
 					onClick={(e) => {
 						e.stopPropagation();
 						setIsUserDropdownOpen(false);
+						setIsStatusDropdownOpen(false);
 					}}
-					className='border-2 p-4 rounded-md bg-white w-[470px] h-[400px] flex flex-col justify-between'>
+					className='border-2 p-4 rounded-md bg-white w-[470px] h-[450px] flex flex-col justify-between'>
 					<div className=' flex text-xl font-semibold justify-between  items-center'>
 						<div className='px-3 pb-2'>
 							{project ? "EDIT PROJECT" : "ADD PROJECT"}
@@ -289,13 +271,75 @@ const EditProject = ({
 							</div>
 							<div className='flex items-center'>
 								<label
+									htmlFor='assigned'
+									className='w-[120px] text-center'>
+									Status:{" "}
+								</label>
+
+								<div
+									className='px-3 py-2 bg-[#f5f5f5]	w-[300px] rounded-xl relative'
+									onClick={(e) => e.stopPropagation()}>
+									<div
+										onClick={() =>
+											setIsStatusDropdownOpen(
+												(prev) => !prev,
+											)
+										}
+										className='flex justify-between hover:cursor-pointer items-center'>
+										<div>{status}</div>
+										<div>
+											{isStatusDropdownOpen ? (
+												<BsChevronUp />
+											) : (
+												<BsChevronDown />
+											)}
+										</div>
+									</div>
+									{isStatusDropdownOpen && (
+										<div className='absolute z-10 bg-[#f5f5f5] rounded-b-md w-full left-0 px-3 py-1'>
+											<div>
+												<option
+													onClick={(e) => {
+														setIsStatusDropdownOpen(
+															false,
+														);
+														setStatus(
+															e.currentTarget
+																.value,
+														);
+													}}
+													value='active '
+													className='flex justify-between border-b hover:cursor-pointer p-2 items-center'>
+													Active
+												</option>
+												<option
+													onClick={(e) => {
+														setIsStatusDropdownOpen(
+															false,
+														);
+														setStatus(
+															e.currentTarget
+																.value,
+														);
+													}}
+													value='archived'
+													className='flex justify-between border-b hover:cursor-pointer p-2 items-center'>
+													Archived
+												</option>
+											</div>
+										</div>
+									)}
+								</div>
+							</div>
+							<div className='flex items-center'>
+								<label
 									htmlFor='completed'
 									className='w-[120px] text-center'>
 									Completed:
 								</label>
 
 								<button
-									className='px-3 py-2 text-4xl font-light text-[#3B71CA]	w-[300px] rounded-xl'
+									className=' text-4xl font-light text-[#3B71CA]	w-[300px] rounded-xl'
 									type='button'
 									onClick={() =>
 										setCompleted((prev) => !prev)

@@ -3,29 +3,18 @@ import { useEffect, useState } from "react";
 import api from "../../../../api/api";
 import ViewProject from "./ViewProject";
 import Loading from "../../../Shared/Loading";
-import { Project, Task, User } from "../../../types";
+import { Project } from "../../../types";
 import Button from "../../../Shared/Button";
-import ProjectBox from "../../../Shared/Project/ProjectBox";
-import { useDebounce } from "../../../debounce";
+import ProjectBox from "../common/ProjectBox";
+import { useDebounce } from "../../../Shared/debounce";
 import Pagination from "../../../Shared/Paginate";
+import { BsChevronUp, BsChevronDown } from "react-icons/bs";
+import { isAxiosError } from "axios";
+import ErrorPrompt from "../../../Shared/ErrorPrompt";
+import ConfirmPrompt from "../../../Shared/ConfirmPrompt";
 
-type Props = {
-	taskList: Task[];
-	setTaskList: React.Dispatch<React.SetStateAction<Task[]>>;
-	projectList: Project[];
-	setProjectList: React.Dispatch<React.SetStateAction<Project[]>>;
-	userList: User[];
-	setUserList: React.Dispatch<React.SetStateAction<User[]>>;
-};
-
-const AdminProjectView = ({
-	taskList,
-	setTaskList,
-	projectList,
-	setProjectList,
-	userList,
-	setUserList,
-}: Props) => {
+const AdminProjectView = () => {
+	const [projectList, setProjectList] = useState<Project[]>([]);
 	const [isEditorOpen, setIsEditorOpen] = useState<
 		Project | null | undefined
 	>(null);
@@ -34,15 +23,22 @@ const AdminProjectView = ({
 	);
 	const [search, setSearch] = useState("");
 	const debouncedSearch = useDebounce(search, 350);
-	const [displayProjectList, setDisplayProjectList] = useState<Project[]>([]);
 	const [loading, setLoading] = useState(false);
 	const [isChange, setIsChange] = useState(false);
 	const [currentPage, setCurrentPage] = useState(1);
 	const [limit, setLimit] = useState(5);
 	const [totalCount, setTotalCount] = useState(0);
+	const [status, setStatus] = useState("active");
+
+	const [showError, setShowError] = useState(false);
+	const [errorMessage, setErrorMessage] = useState("");
 
 	const onPageChange = (pageNumber: number) => {
 		setCurrentPage(pageNumber);
+		fetchProjects(debouncedSearch, (pageNumber - 1) * limit, limit, status);
+	};
+	const handleLimitChange = (newLimit: number) => {
+		setLimit(newLimit);
 	};
 
 	const projectID = new URLSearchParams(location.search).get("target");
@@ -67,69 +63,97 @@ const AdminProjectView = ({
 			setIsViewProjectOpen(project);
 		}
 	};
+
+	const [confirmPrompt, setConfirmPrompt] = useState<string | null>("");
+	const [confirmMessage, setConfirmMessage] = useState("");
+
+	const cancelFunction = () => {
+		setConfirmPrompt(null);
+	};
+
 	const handleDeleteClick = async (id: string) => {
-		const url = `/admin/project/${id}`;
-		const response = await api.delete(url);
-		if (response.status === 200) {
-			const newList = [...projectList];
-			setDisplayProjectList(
-				newList.filter((project) => project._id !== id),
-			);
+		setConfirmPrompt(id);
+		setConfirmMessage("Are you sure, you want to delete your project ?");
+	};
+
+	const handleDeletePrompt = async (id: string) => {
+		try {
+			const url = `/admin/project/${id}`;
+			await api.delete(url);
+			setIsChange((prev) => !prev);
+		} catch (err) {
+			if (isAxiosError(err)) {
+				setShowError(true);
+				setErrorMessage(err.response?.data?.error);
+			} else {
+				console.log(err);
+			}
 		}
 	};
+
 	const handleNewClick = () => {
 		setIsEditorOpen(undefined);
 	};
 
+	const handleArchiveClick = async () => {
+		const editedProject = {
+			_id: id,
+			status: "archived",
+		};
+
+		const response = await api.put("/admin/project", editedProject);
+		if (response.status === 200) {
+			setIsChange((prev) => !prev);
+		}
+	};
+
+	const handleUnarchiveClick = async (id: string) => {
+		const editedProject = {
+			_id: id,
+			status: "active",
+		};
+
+		const response = await api.put("/admin/project", editedProject);
+		if (response.status === 200) {
+			setIsChange((prev) => !prev);
+		}
+	};
+
+	const fetchProjects = async (
+		search: string,
+		skip: number,
+		limit: number,
+		status: string,
+	) => {
+		const projectResponse = await api.get(
+			`/admin/project/?search=${search}&skip=${skip}&limit=${limit}&status=${status}`,
+		);
+		if (projectResponse.status === 200) {
+			setTotalCount(projectResponse.data.totalRecords);
+			projectResponse.data.projectDocs.forEach(
+				(project: Project) =>
+					(project.assigned = project.assigned.filter(
+						(p) => p.user?._id,
+					)),
+			);
+			setProjectList(projectResponse.data.projectDocs);
+			setLoading(false);
+		}
+	};
+
+	const closeErrorPrompt = () => {
+		setShowError(false);
+		setErrorMessage("");
+	};
+
+	const [isStatusDropdownOpen, setIsStatusDropdownOpen] = useState(false);
+
 	useEffect(() => {
 		setLoading(true);
-		async function searchProject() {
-			const searchString = debouncedSearch;
-
-			const projectResponse = await api.get(
-				`/admin/project/?search=${searchString}&skip=${
-					(currentPage - 1) * limit
-				}&limit=${limit}`,
-			);
-			if (projectResponse.status === 200) {
-				setTotalCount(projectResponse.data.totalRecords);
-				projectResponse.data.projectDocs.forEach(
-					(project: Project) =>
-						(project.assigned = project.assigned.filter(
-							(p) => p.user?._id,
-						)),
-				);
-				setDisplayProjectList(projectResponse.data.projectDocs);
-				setLoading(false);
-			}
-		}
-		searchProject();
+		setCurrentPage(1);
+		fetchProjects(debouncedSearch, 0, limit, status);
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [currentPage, limit]);
-
-	useEffect(() => {
-		setLoading(true);
-		async function searchProject() {
-			const searchString = debouncedSearch;
-			setCurrentPage(1);
-			const projectResponse = await api.get(
-				`/admin/project/?search=${searchString}&skip=${0}&limit=${limit}`,
-			);
-			if (projectResponse.status === 200) {
-				setTotalCount(projectResponse.data.totalRecords);
-				projectResponse.data.projectDocs.forEach(
-					(project: Project) =>
-						(project.assigned = project.assigned.filter(
-							(p) => p.user?._id,
-						)),
-				);
-				setDisplayProjectList(projectResponse.data.projectDocs);
-				setLoading(false);
-			}
-		}
-		searchProject();
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [debouncedSearch, isChange]);
+	}, [debouncedSearch, isChange, limit, status]);
 
 	return (
 		<div className='flex justify-center h-full px-4 w-full relative bg-white shadow-lg rounded-md p-4'>
@@ -137,6 +161,20 @@ const AdminProjectView = ({
 				<Loading />
 			) : (
 				<div className='flex flex-col gap-2 w-full h-full'>
+					{showError && (
+						<ErrorPrompt
+							error={errorMessage}
+							closeErrorPrompt={closeErrorPrompt}
+						/>
+					)}
+					{confirmPrompt && (
+						<ConfirmPrompt
+							confirmFunction={handleDeletePrompt}
+							id={confirmPrompt}
+							message={confirmMessage}
+							cancelFunction={cancelFunction}
+						/>
+					)}
 					<div className='flex justify-between px-4 items-center py-1'>
 						<input
 							type='text'
@@ -145,31 +183,84 @@ const AdminProjectView = ({
 							value={search}
 							onChange={(e) => setSearch(e.target.value)}
 						/>
+						<div className='flex items-center gap-2'>
+							<label
+								htmlFor='assigned'
+								className='w-[50px] text-center'>
+								Status:{" "}
+							</label>
+
+							<div
+								className='px-3 py-2 bg-[#f5f5f5]	w-[120px] rounded-xl relative'
+								onClick={(e) => e.stopPropagation()}>
+								<div
+									onClick={() =>
+										setIsStatusDropdownOpen((prev) => !prev)
+									}
+									className='flex justify-between hover:cursor-pointer items-center'>
+									<div>{status}</div>
+									<div>
+										{isStatusDropdownOpen ? (
+											<BsChevronUp />
+										) : (
+											<BsChevronDown />
+										)}
+									</div>
+								</div>
+								{isStatusDropdownOpen && (
+									<div className='absolute z-10 bg-[#f5f5f5] rounded-b-md w-full left-0 px-3 py-1'>
+										<div>
+											<option
+												onClick={(e) => {
+													setIsStatusDropdownOpen(
+														false,
+													);
+													setStatus(
+														e.currentTarget.value,
+													);
+												}}
+												value='active '
+												className='flex justify-between border-b hover:cursor-pointer p-2 items-center'>
+												Active
+											</option>
+											<option
+												onClick={(e) => {
+													setIsStatusDropdownOpen(
+														false,
+													);
+													setStatus(
+														e.currentTarget.value,
+													);
+												}}
+												value='archived'
+												className='flex justify-between border-b hover:cursor-pointer p-2 items-center'>
+												Archived
+											</option>
+										</div>
+									</div>
+								)}
+							</div>
+						</div>
 						<Button name='+ Add' onClick={handleNewClick} />
 					</div>
 					{isViewProjectOpen && (
 						<ViewProject
 							project={isViewProjectOpen}
 							setIsViewProjectOpen={setIsViewProjectOpen}
-							taskList={taskList}
-							setTaskList={setTaskList}
 						/>
 					)}
 					{isEditorOpen !== null && (
 						<EditProject
 							project={isEditorOpen}
 							setIsEditorOpen={setIsEditorOpen}
-							projectList={projectList}
-							setProjectList={setProjectList}
-							userList={userList}
-							setUserList={setUserList}
 							setIsChange={setIsChange}
 						/>
 					)}
 					<div>
 						<div className='flex justify-between w-full'>
-							<div className='w-[40%] text-center'>Title</div>
-							<div className='w-[40%] text-center'>Assigned</div>
+							<div className='w-[30%] text-center'>Title</div>
+							<div className='w-[30%] text-center'>Assigned</div>
+							<div className='w-[20%] text-center'>Status</div>
 							<div className='w-[15%] text-center'>Completed</div>
 							<div className='w-[5%] text-center'></div>
 						</div>
@@ -182,16 +273,11 @@ const AdminProjectView = ({
 							</div>
 						) : (
 							<>
-								{displayProjectList.map((project) => {
+								{projectList.map((project) => {
 									return (
 										<ProjectBox
 											key={project._id}
 											project={project}
-											handleViewClick={handleViewClick}
-											handleEditClick={handleEditClick}
-											handleDeleteClick={
-												handleDeleteClick
-											}
 											isAdminView={true}
 										/>
 									);
@@ -205,6 +291,8 @@ const AdminProjectView = ({
 							pageSize={limit}
 							totalCount={totalCount}
 							onPageChange={onPageChange}
+							handleLimitChange={handleLimitChange}
+							limitRange={[5, 10, 15]}
 						/>
 					</div>
 				</div>

@@ -1,5 +1,7 @@
 # Todo
 
-- Set the refresh route on token expiry
 - Set the change password functionality
+- Correct the user info setup in app.tsx
+  
+  - Change the logout in header to set the user info to null
   

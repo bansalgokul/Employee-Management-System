@@ -2,16 +2,13 @@ import { useState } from "react";
 import api from "../../../../api/api";
 import { GrClose } from "react-icons/gr";
 import Button from "../../../Shared/Button";
-import { User } from "../../../types";
 
 type Props = {
 	setIsNewUserOpen: React.Dispatch<React.SetStateAction<boolean>>;
-
-	userList: User[];
-	setUserList: React.Dispatch<React.SetStateAction<User[]>>;
+	setIsChanged: React.Dispatch<React.SetStateAction<boolean>>;
 };
 
-const AddUser = ({ setIsNewUserOpen, userList, setUserList }: Props) => {
+const AddUser = ({ setIsNewUserOpen, setIsChanged }: Props) => {
 	const [name, setName] = useState("");
 	const [email, setEmail] = useState("");
 	const [password, setPassword] = useState("");
@@ -35,7 +32,7 @@ const AddUser = ({ setIsNewUserOpen, userList, setUserList }: Props) => {
 
 		const response = await api.post("/admin/user", newUser);
 		if (response.status === 201) {
-			setUserList([...userList, response.data.userDoc]);
+			setIsChanged((prev) => !prev);
 		}
 
 		setIsNewUserOpen(false);

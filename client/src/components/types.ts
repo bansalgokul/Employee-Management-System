@@ -14,6 +14,7 @@ export type Project = {
 	completed: boolean;
 	assigned: Array<{ user: User }>;
 	updatedAt: Date;
+	status: string;
 };
 
 export type Task = {

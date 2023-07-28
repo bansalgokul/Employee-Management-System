@@ -1,6 +1,6 @@
 import { BsThreeDotsVertical } from "react-icons/bs";
-import ActionDropdown from "../ActionDropdown";
-import { User } from "../../types";
+import ActionDropdown from "../../../Shared/ActionDropdown";
+import { User } from "../../../types";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 

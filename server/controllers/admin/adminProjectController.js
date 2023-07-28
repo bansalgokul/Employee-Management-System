@@ -1,10 +1,11 @@
 import Project from "../../models/Project.js";
+import Task from "../../models/Task.js";
 import User from "../../models/User.js";
 import Joi from "joi";
 
 const addProjectAdmin = async (req, res) => {
 	try {
-		const { title, description, assignees, completed } = req.body;
+		const { title, description, assignees, completed, status } = req.body;
 
 		const schema = Joi.object({
 			title: Joi.string().required(),
@@ -40,8 +41,9 @@ const addProjectAdmin = async (req, res) => {
 		const addFields = {
 			title,
 			description,
-			assigned: assigned ? assigned : [],
-			completed: completed ? completed : false,
+			assigned: assigned || [],
+			completed: completed || false,
+			status: status || "active",
 		};
 
 		const projectDoc = await Project.create(addFields);
@@ -59,7 +61,8 @@ const addProjectAdmin = async (req, res) => {
 
 const editProjectAdmin = async (req, res) => {
 	try {
-		const { _id, title, description, assignees, completed } = req.body;
+		const { _id, title, description, assignees, completed, status } =
+			req.body;
 
 		const schema = Joi.object({
 			_id: Joi.string().required(),
@@ -113,6 +116,9 @@ const editProjectAdmin = async (req, res) => {
 		if (completed !== undefined) {
 			updateFields.completed = completed;
 		}
+		if (status !== undefined) {
+			updateFields.status = status;
+		}
 
 		const response = await Project.findByIdAndUpdate(_id, updateFields, {
 			new: true,
@@ -136,6 +142,13 @@ const deleteProjectAdmin = async (req, res) => {
 		const projectDoc = await Project.findById(id);
 		if (!projectDoc) {
 			return res.status(404).json({ error: "Project not found" });
+		}
+
+		const taskDocs = await Task.find({ project: id });
+		if (taskDocs.length > 0) {
+			return res
+				.status(400)
+				.json({ error: "Cannot delete populated project" });
 		}
 
 		await projectDoc.deleteOne();
@@ -163,7 +176,7 @@ const getAllProjectAdmin = async (req, res) => {
 // search / skip / limit / id
 const getProjectAdmin = async (req, res) => {
 	if (req.query) {
-		let { search, id, length, skip, limit } = req.query;
+		let { search, id, skip, limit, status } = req.query;
 
 		// To calculate total records in db
 		const projectDocsLength = await Project.countDocuments({
@@ -173,6 +186,7 @@ const getProjectAdmin = async (req, res) => {
 		search = search || "";
 		skip = skip || 0;
 		limit = limit || projectDocsLength;
+		status = status || "active";
 
 		if (id) {
 			try {
@@ -189,6 +203,7 @@ const getProjectAdmin = async (req, res) => {
 		try {
 			const projectDocs = await Project.find({
 				title: { $regex: search, $options: "i" },
+				status: status,
 			})
 				.sort({ updatedAt: -1 })
 				.skip(skip)

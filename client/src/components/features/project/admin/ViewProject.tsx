@@ -8,17 +8,11 @@ import { Project, Task } from "../../../types";
 
 type Props = {
 	project: Project;
-	setIsViewProjectOpen: React.Dispatch<React.SetStateAction<Project | null>>;
-	taskList: Task[];
-	setTaskList: React.Dispatch<React.SetStateAction<Task[]>>;
+	setIsViewProject: React.Dispatch<React.SetStateAction<boolean>>;
 };
 
-const ViewProject = ({
-	setIsViewProjectOpen,
-	project,
-	taskList,
-	setTaskList,
-}: Props) => {
+const ViewProject = ({ setIsViewProject, project }: Props) => {
+	const [taskList, setTaskList] = useState<Task[]>([]);
 	const [search, setSearch] = useState("");
 	const [loading, setLoading] = useState(false);
 	const navigate = useNavigate();
@@ -36,13 +30,10 @@ const ViewProject = ({
 					project = projectResponse.data.projectDoc;
 				}
 
-				const taskResponse = await api.get("/admin/task");
+				const taskResponse = await api.get(
+					`/admin/task/?group=project&target=${project._id}`,
+				);
 				if (taskResponse.status === 200) {
-					taskResponse.data.taskDocs =
-						taskResponse.data.taskDocs.filter(
-							(task: Task) =>
-								task.user !== null && task.project !== null,
-						);
 					setTaskList(taskResponse.data.taskDocs);
 				}
 
@@ -56,7 +47,7 @@ const ViewProject = ({
 	}, []);
 
 	const handleCancel = () => {
-		setIsViewProjectOpen(null);
+		setIsViewProject(false);
 		navigate(`/admin/project`);
 	};
 
